@@ -1,57 +1,24 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-  PieChartOutlined,
-  DesktopOutlined,
-  FileOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
-import { Button, Layout, Menu, theme } from "antd";
-// import logo from "../../../public/logo.webp";
+import Menus from "../../components/Menu";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Button, Layout, theme } from "antd";
 import RenderTitle from "../../utils/renderTitle";
-const { Header, Sider } = Layout;
-function getItem(label, key, icon, children) {
-  return {
-    key,
-    icon,
-    children,
-    label,
-  };
-}
 
-const items = [
-  getItem("Option 1", "1", <PieChartOutlined />),
-  getItem("Option 2", "2", <DesktopOutlined />),
-  getItem("User", "sub1", <UserOutlined />, [
-    getItem("Tom", "3"),
-    getItem("Bill", "4"),
-    getItem("Alex", "5"),
-  ]),
-  getItem("Team", "sub2", <TeamOutlined />, [
-    getItem("Team 1", "6"),
-    getItem("Team 2", "8"),
-  ]),
-  getItem("Files", "9", <FileOutlined />),
-];
+const { Header, Sider } = Layout;
 
 const LayoutMaster = () => {
   const [collapsed, setCollapsed] = useState(false);
+
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer },
   } = theme.useToken();
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="demo-logo-vertical"></div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          defaultSelectedKeys={["1"]}
-          items={items}
-        />
+        <Menus />
       </Sider>
       <Layout>
         <Header
@@ -77,4 +44,5 @@ const LayoutMaster = () => {
     </Layout>
   );
 };
+
 export default LayoutMaster;

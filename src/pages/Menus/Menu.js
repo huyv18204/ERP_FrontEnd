@@ -2,26 +2,23 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
-import * as employeeService from "../../services/employees";
-import * as departmentService from "../../services/departments";
+import * as menusService from "../../services/menus";
 import { useMessage } from "../../hooks/useMessage";
 import BtnClear from "../../components/Button/BtnClear";
 import BtnQuery from "../../components/Button/BtnQuery";
 import BtnSave from "../../components/Button/BtnSave";
 import BtnDelete from "../../components/Button/BtnDelete";
-const Employee = () => {
-  const initialEmployeeState = {
-    name: "",
-    phone: "",
-    address: "",
-    work_date: "",
-    department_id: "",
+const Menu = () => {
+  const initialMenuState = {
+    label: "",
+    parent: "",
+    icon: "",
   };
-  const [employee, setEmployee] = useState(initialEmployeeState);
+  const [menu, setMenu] = useState(initialMenuState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [employees, setEmployees] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [changedEmployees, setChangedEmployees] = useState([]);
+  const [menus, setMenus] = useState([]);
+  const [menusRoot, setMenusRoot] = useState([]);
+  const [changedMenus, setChangedMenus] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
@@ -29,139 +26,110 @@ const Employee = () => {
   const [form] = Form.useForm();
 
   const handleInputTableChange = (e, key, column) => {
-    const newEmployees = [...employees];
-    const index = newEmployees.findIndex((item) => key === item.key);
-    newEmployees[index][column] = e.target.value;
-    setEmployees(newEmployees);
+    const newMenus = [...menus];
+    const index = newMenus.findIndex((item) => key === item.key);
+    newMenus[index][column] = e.target.value;
+    setMenus(newMenus);
 
     // Cập nhật danh sách các bản ghi đã thay đổi
-    setChangedEmployees((prev) => {
+    setChangedMenus((prev) => {
       const isExisting = prev.some((item) => item.key === key);
       if (!isExisting) {
-        return [...prev, newEmployees[index]];
+        return [...prev, newMenus[index]];
       }
-      return prev.map((item) =>
-        item.key === key ? newEmployees[index] : item
-      );
+      return prev.map((item) => (item.key === key ? newMenus[index] : item));
     });
   };
 
   const handleOptionTableChange = (value, key, column) => {
-    const newEmployees = [...employees];
-    const index = newEmployees.findIndex((item) => key === item.key);
+    const newMenus = [...menus];
+    const index = newMenus.findIndex((item) => key === item.key);
     if (index !== -1) {
-      newEmployees[index][column] = value;
-      setEmployees(newEmployees);
+      newMenus[index][column] = value;
+      setMenus(newMenus);
 
-      setChangedEmployees((prev) => {
+      setChangedMenus((prev) => {
         const isExisting = prev.some((item) => item.key === key);
         if (!isExisting) {
-          return [...prev, newEmployees[index]];
+          return [...prev, newMenus[index]];
         }
-        return prev.map((item) =>
-          item.key === key ? newEmployees[index] : item
-        );
+        return prev.map((item) => (item.key === key ? newMenus[index] : item));
       });
     }
   };
 
   const columns = [
     {
-      title: "No.",
-      dataIndex: "employee_code",
-      key: "employee_code",
-      width: "9%",
-      ...getColumnSearch("employee_code"),
-      fixed: "left",
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Label",
+      dataIndex: "label",
+      key: "label",
       width: "16%",
-      ...getColumnSearch("name"),
+      ...getColumnSearch("label"),
       render: (value, record) => (
         <Input
           className="input-no-border"
-          name={`name[${record.key}]`}
+          name={`label[${record.key}]`}
           type="text"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "name")}
+          onChange={(e) => handleInputTableChange(e, record.key, "label")}
         />
       ),
     },
     {
-      title: "Phone",
-      dataIndex: "phone",
-      key: "phone",
+      title: "URL",
+      dataIndex: "url",
+      key: "url",
       width: "15%",
-      ...getColumnSearch("phone"),
+      ...getColumnSearch("url"),
       render: (value, record) => (
         <Input
           className="input-no-border"
-          name={`phone[${record.key}]`}
+          name={`url[${record.key}]`}
           type="text"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "phone")}
+          onChange={(e) => handleInputTableChange(e, record.key, "url")}
         />
       ),
     },
     {
-      title: "Department",
-      dataIndex: "department",
-      key: "department",
+      title: "Icon",
+      dataIndex: "icon",
+      key: "icon",
       width: "12%",
-      ...getColumnSearch("department"),
+      ...getColumnSearch("icon"),
+      render: (value, record) => (
+        <Input
+          className="input-no-border"
+          name={`icon[${record.key}]`}
+          type="text"
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "icon")}
+        />
+      ),
+    },
+    {
+      title: "Parent",
+      dataIndex: "parent",
+      key: "parent",
+      width: "8%",
+      ...getColumnSearch("parent"),
       render: (value, record) => (
         <Select
-          name={`department_id[${record.key}]`}
-          placeholder="Select a department"
+          name={`parent[${record.key}]`}
+          placeholder="Select a parent"
           onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "department_id")
+            handleOptionTableChange(newValue, record.key, "parent")
           }
           allowClear
-          value={record.department_id}
-          style={{ minWidth: 130 }}
+          value={record.parent}
+          style={{ minWidth: 250 }}
         >
-          {departments.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
+          {menusRoot.map((item) => (
+            <Option key={item.key} value={item.id}>
+              {item.label}
             </Option>
           ))}
         </Select>
-      ),
-    },
-    {
-      title: "Work Date",
-      dataIndex: "work_date",
-      key: "work_date",
-      width: "11%",
-      ...getColumnSearch("work_date"),
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`work_date[${record.key}]`}
-          type="date"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "work_date")}
-        />
-      ),
-    },
-    {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
-      ...getColumnSearch("address"),
-      sorter: (a, b) => a.address.length - b.address.length,
-      sortDirections: ["descend", "ascend"],
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`address[${record.key}]`}
-          type="text"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "address")}
-        />
       ),
     },
     {
@@ -169,7 +137,6 @@ const Employee = () => {
       key: "operation",
       width: "7%",
       className: "text-center",
-      fixed: "right",
       render: (_, record) => (
         <BtnDelete event={() => handleDelete(record.id)} />
       ),
@@ -182,32 +149,32 @@ const Employee = () => {
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
-    setEmployee((prev) => ({
+    setMenu((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleOptionFormChange = (value) => {
-    setEmployee((prev) => ({
+    setMenu((prev) => ({
       ...prev,
-      department_id: value,
+      parent: value,
     }));
   };
 
   const handleQuery = async () => {
     try {
-      const response = await employeeService.index(employee);
-      const data = response?.map((employee, index) => ({
-        ...employee,
+      const response = await menusService.index(menu);
+      const data = response?.map((menu, index) => ({
+        ...menu,
         key: index,
-        department: employee.department.name,
       }));
-      setEmployees(data);
+      console.log(response);
+      setMenus(data);
     } catch (error) {
       Message(
         "error",
-        "Error fetching employees: " +
+        "Error fetching menus: " +
           (error.response ? error.response.data : error.message)
       );
     }
@@ -215,27 +182,27 @@ const Employee = () => {
 
   const handleSave = useCallback(async () => {
     try {
-      if (changedEmployees.length > 0) {
-        for (const emp of changedEmployees) {
-          if (emp && emp.name && emp.department_id) {
-            const res = await employeeService.update(emp.id, emp);
+      if (changedMenus.length > 0) {
+        for (const menu of changedMenus) {
+          if (menu && menu.label) {
+            const res = await menusService.update(menu.id, menu);
             Message("success", res.message);
           } else {
             Message("error", "Please fill in required fields");
           }
         }
-        setChangedEmployees([]);
+        setChangedMenus([]);
       } else {
-        if (employee && employee.name && employee.department_id) {
-          const data = await employeeService.store(employee);
+        if (menu && menu.label) {
+          const data = await menusService.store(menu);
           const newEmployee = {
             ...data,
             key: data.employee_code,
             department: data.department ? data.department.name : "",
           };
-          setEmployees([newEmployee]);
+          setMenus([newEmployee]);
           handleClear();
-          Message("success", "Add new employee success");
+          Message("success", "Add new menu success");
         } else {
           Message("error", "Please fill in required fields");
         }
@@ -247,12 +214,12 @@ const Employee = () => {
           (error.response ? error.response.data : error.message)
       );
     }
-  }, [employee, employees]);
+  }, [menu, menus]);
 
   const handleDelete = useCallback(
     async (id) => {
       try {
-        await employeeService.destroy(id);
+        await menusService.destroy(id);
         Message("success", "Delete success");
         handleQuery();
       } catch (error) {
@@ -263,26 +230,27 @@ const Employee = () => {
         );
       }
     },
-    [employees]
+    [menus]
   );
 
   const handleClear = () => {
-    setEmployee(initialEmployeeState);
+    setMenu(initialMenuState);
     form.resetFields();
   };
 
-  const getDepartment = async () => {
-    const data = await departmentService.index();
-    setDepartments(data);
+  const getMenuRoot = async () => {
+    const data = await menusService.getMenuRoot();
+    setMenusRoot(data);
   };
 
   useEffect(() => {
-    getDepartment();
+    getMenuRoot();
   }, []);
 
   useEffect(() => {
-    form.setFieldsValue(employee);
-  }, [employee, form]);
+    form.setFieldsValue(menu);
+  }, [menu, form]);
+
   return (
     <div>
       <Content
@@ -322,38 +290,35 @@ const Employee = () => {
             rules={[
               {
                 required: true,
-                message: "Please input name",
+                message: "Please input label",
               },
             ]}
-            name="name"
-            label="Name"
+            name="label"
+            label="Label"
             className="py-2"
           >
             <Input
-              name="name"
+              name="label"
               onChange={handleInputFormChange}
               type="text"
-              value={employee.name}
+              value={menu.label}
               placeholder="Enter Name"
             />
           </Form.Item>
-          <Form.Item name="phone" label="Phone" className="py-2">
+          <Form.Item name="url" label="URL" className="py-2">
             <Input
-              name="phone"
+              name="url"
               onChange={handleInputFormChange}
-              value={employee.phone}
-              placeholder="Enter Phone"
+              value={menu.url}
+              placeholder="Enter URL"
             />
           </Form.Item>
-
-          <Form.Item name="address" label="Address" className="py-2">
+          <Form.Item name="icon" label="Icon" className="py-2">
             <Input
-              name="address"
+              name="icon"
               onChange={handleInputFormChange}
-              type="text"
-              value={employee.address}
-              style={{ width: 350 }}
-              placeholder="Enter Address"
+              value={menu.icon}
+              placeholder="Enter Icon"
             />
           </Form.Item>
 
@@ -361,35 +326,26 @@ const Employee = () => {
             rules={[
               {
                 required: true,
-                message: "Please input department",
+                message: "Please input parent",
               },
             ]}
-            name="department"
-            label="Department"
+            name="parent"
+            label="Parent"
             className="py-2"
           >
             <Select
               style={{ width: 180 }}
-              name="department_id"
-              placeholder="Select a department"
+              name="parent"
+              placeholder="Select a parent"
               onChange={handleOptionFormChange}
               allowClear
             >
-              {departments.map((item) => (
+              {menusRoot.map((item) => (
                 <Option key={item.id} value={item.id}>
-                  {item.name}
+                  {item.label}
                 </Option>
               ))}
             </Select>
-          </Form.Item>
-
-          <Form.Item name="work_date" label="Work Date" className="py-2">
-            <Input
-              name="work_date"
-              onChange={handleInputFormChange}
-              type="date"
-              value={employee.work_date}
-            />
           </Form.Item>
         </Form>
       </Content>
@@ -406,20 +362,16 @@ const Employee = () => {
         }}
       >
         <Table
-          scroll={{
-            x: 1500,
-            y: 350,
-          }}
           pagination={{
             current: currentPage,
             pageSize: 5,
-            total: employees.length,
+            total: menus.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={employees}
+          dataSource={menus}
         />
       </Content>
 
@@ -428,4 +380,4 @@ const Employee = () => {
   );
 };
 
-export default Employee;
+export default Menu;

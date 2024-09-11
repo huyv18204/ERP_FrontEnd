@@ -1,12 +1,12 @@
 import React from "react";
 import { Button, Space, Popconfirm } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-const BtnDelete = ({ event, title, description }) => {
+const BtnDelete = ({ event }) => {
   return (
     <Space size="small">
       <Popconfirm
-        title={title}
-        description={description}
+        title="Delete"
+        description="Do you want to delete?"
         okText="Yes"
         cancelText="No"
         onConfirm={event}

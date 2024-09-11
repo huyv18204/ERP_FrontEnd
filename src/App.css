@@ -1,0 +1,11 @@
+.input-no-border {
+    border: none; /* Không hiển thị border ban đầu */
+    outline: none; /* Bỏ viền outline mặc định */
+    transition: border 0.3s ease; /* Thêm hiệu ứng chuyển đổi khi border thay đổi */
+  }
+  
+  .input-no-border:focus {
+    border: 1px solid #1890ff; /* Thêm border khi input có focus */
+    outline: none; /* Bỏ viền outline mặc định */
+  }
+  

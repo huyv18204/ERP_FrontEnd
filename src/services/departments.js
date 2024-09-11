@@ -1,4 +1,4 @@
-import { Save, Query, Delete } from "./toolbar";
+import { Create, Query, Delete, Update } from "./toolbar";
 
 const endpoint = "departments/";
 
@@ -8,11 +8,16 @@ export const index = async (params) => {
 };
 
 export const store = async (data) => {
-  const response = await Save(endpoint, data);
+  const response = await Create(endpoint, data);
   return response;
 };
 
 export const destroy = async (id) => {
   const response = await Delete(endpoint + id);
+  return response;
+};
+
+export const update = async (id, data) => {
+  const response = await Update(endpoint + id, data);
   return response;
 };

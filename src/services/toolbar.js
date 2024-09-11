@@ -1,13 +1,14 @@
 import instance from "../configs/axios";
-export const Save = async (endpoint, data) => {
+export const Create = async (endpoint, data) => {
   try {
     const res = await instance.post(endpoint, data);
     return res.data;
   } catch (error) {
     console.error(
-      "Error saving data:",
+      "Error create data:",
       error.response ? error.response.data : error.message
     );
+    throw error;
   }
 };
 
@@ -17,9 +18,10 @@ export const Update = async (endpoint, data) => {
     return res.data;
   } catch (error) {
     console.error(
-      "Error saving data:",
+      "Error update data:",
       error.response ? error.response.data : error.message
     );
+    throw error;
   }
 };
 
@@ -40,14 +42,35 @@ export const Query = async (endpoint, data) => {
     const res = await instance.get(endpoint);
     return res.data;
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    console.error(
+      "Error fetching employees:",
+      error.response ? error.response.data : error.message
+    );
+    throw error;
   }
 };
 
 export const Delete = async (endpoint) => {
-  await instance.delete(endpoint).then((res) => {
+  try {
+    const res = await instance.delete(endpoint);
     if (res.status === 200) {
       return res.data;
     }
-  });
+  } catch (error) {
+    console.error(
+      "Error deleting data:",
+      error.response ? error.response.data : error.message
+    );
+    throw error; // Ném lỗi để hàm gọi bên ngoài có thể xử lý
+  }
 };
+
+// export const ServerStatus = async () => {
+//   try {
+//     const response = await axios.get("http://localhost:8000/ping");
+//     return response.status === 200;
+//   } catch (error) {
+//     console.error("Server is not available:", error.message);
+//     return false;
+//   }
+// };

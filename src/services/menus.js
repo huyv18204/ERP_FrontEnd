@@ -1,6 +1,16 @@
 import { Create, Query, Delete, Update } from "./toolbar";
 
-const endpoint = "employees/";
+const endpoint = "menus/";
+
+export const getMenuTree = async (params) => {
+  const data = await Query(endpoint + "menu-tree", params);
+  return data;
+};
+
+export const getMenuRoot = async (params) => {
+  const data = await Query(endpoint + "menu-root", params);
+  return data;
+};
 
 export const index = async (params) => {
   const data = await Query(endpoint, params);
