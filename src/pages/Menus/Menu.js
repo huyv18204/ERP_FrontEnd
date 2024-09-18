@@ -197,8 +197,7 @@ const Menu = () => {
           const data = await menusService.store(menu);
           const newEmployee = {
             ...data,
-            key: data.employee_code,
-            department: data.department ? data.department.name : "",
+            key: data.id,
           };
           setMenus([newEmployee]);
           handleClear();

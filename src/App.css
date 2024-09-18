@@ -9,3 +9,7 @@
     outline: none; /* Bỏ viền outline mặc định */
   }
   
+  .no-border {
+    border: none; /* Không hiển thị border ban đầu */
+    outline: none; /* Bỏ viền outline mặc định */
+  }

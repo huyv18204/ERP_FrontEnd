@@ -15,6 +15,16 @@ const RenderTitle = () => {
       return <span className="ms-3">Line Management</span>;
     case "/erp-system/factories":
       return <span className="ms-3">Factory Management</span>;
+    case "/erp-system/colors":
+      return <span className="ms-3">Color Management</span>;
+    case "/erp-system/sizes":
+      return <span className="ms-3">Size Management</span>;
+    case "/erp-system/processes":
+      return <span className="ms-3">Process Management</span>;
+    case "/erp-system/ngs":
+      return <span className="ms-3">NG Management</span>;
+    case "/erp-system/sale-orders/register":
+      return <span className="ms-3">Sale Order Register</span>;
     default:
       return <>Dashboard</>;
   }

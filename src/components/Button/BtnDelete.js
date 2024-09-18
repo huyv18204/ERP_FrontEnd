@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Space, Popconfirm } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-const BtnDelete = ({ event }) => {
+const BtnDelete = ({ event, disabled }) => {
   return (
     <Space size="small">
       <Popconfirm
@@ -11,7 +11,7 @@ const BtnDelete = ({ event }) => {
         cancelText="No"
         onConfirm={event}
       >
-        <Button type="primary" danger>
+        <Button disabled={disabled} type="primary" danger>
           <DeleteOutlined />
         </Button>
       </Popconfirm>
