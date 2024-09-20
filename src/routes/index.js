@@ -10,7 +10,11 @@ import Color from "../pages/Colors/Color";
 import Size from "../pages/Sizes/Size";
 import Process from "../pages/Processes/Process";
 import NG from "../pages/NGs/NG";
+import SaleOrderList from "../pages/SaleOrders/SaleOrderList";
 import SaleOrderRegister from "../pages/SaleOrders/SaleOrderRegister";
+import Supplier from "../pages/Suppliers/Supplier";
+import Warehouse from "../pages/Warehouses/Warehouse";
+import Product from "../pages/Products/Product";
 
 const RouterComponent = () => {
   return (
@@ -35,6 +39,10 @@ const RouterComponent = () => {
               element={<SaleOrderRegister />}
             />
 
+            <Route path="sale-orders" element={<SaleOrderList />} />
+            <Route path="suppliers" element={<Supplier />} />
+            <Route path="warehouses" element={<Warehouse />} />
+            <Route path="products" element={<Product />} />
             {/* <Route path="*" element={<Page404 />} />  */}
           </Route>
         </Routes>

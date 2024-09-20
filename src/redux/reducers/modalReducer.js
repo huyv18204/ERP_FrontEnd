@@ -3,6 +3,8 @@ import {
   CLOSE_MODAL_PRODUCT_ITEM,
   OPEN_MODAL_PRODUCT_PROCESS,
   CLOSE_MODAL_PRODUCT_PROCESS,
+  OPEN_MODAL_PRODUCT_NG,
+  CLOSE_MODAL_PRODUCT_NG,
 } from "../types";
 
 const initialState = {
@@ -26,7 +28,14 @@ const modalReducer = (state = initialState, action) => {
       };
     case CLOSE_MODAL_PRODUCT_PROCESS:
       return { ...state, isOpenProductProcess: false };
-
+    case OPEN_MODAL_PRODUCT_NG:
+      return {
+        ...state,
+        saleOrder: action.payload,
+        isOpenProductNg: true,
+      };
+    case CLOSE_MODAL_PRODUCT_NG:
+      return { ...state, isOpenProductNg: false };
     default:
       return state;
   }

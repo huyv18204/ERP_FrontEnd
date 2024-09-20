@@ -1,39 +1,38 @@
 import { Modal } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { closeModalProductItem } from "../../../redux/actions/modalAction";
+import { closeModalProductNG } from "../../../redux/actions/modalAction";
 import React, { useEffect, useState } from "react";
 import { Layout, theme, Table, Select } from "antd";
 import { Form, Input } from "antd";
 import { useMessage } from "../../../hooks/useMessage";
-import * as sizesService from "../../../services/sizes";
-import * as colorsService from "../../../services/colors";
-import * as productItemService from "../../../services/product_items";
+import * as NGService from "../../../services/ngs";
+import * as productNGService from "../../../services/product_ngs";
 import BtnAddRow from "../../../components/Button/BtnAddRow";
 import BtnSave from "../../../components/Button/BtnSave";
 import BtnDelete from "../../../components/Button/BtnDelete";
-const SizeColorModal = () => {
-  const [productItems, setProductItems] = useState([]);
+const NGModal = () => {
+  const [productNG, setProductNG] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sizes, setSizes] = useState([]);
-  const [colors, setColors] = useState([]);
+  const [NG, setNG] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { Content } = Layout;
   const [form] = Form.useForm();
   const { Option } = Select;
+  const dispatch = useDispatch();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const isModalOpen = useSelector((state) => state.modal.isOpenProductItem);
+  const isModalOpen = useSelector((state) => state.modal.isOpenProductNg);
   const saleOrderItem = useSelector((state) => state.modal.saleOrder);
 
-  const getProductItem = async (saleOrderItemId) => {
+  const getProductNG = async (saleOrderItemId) => {
     if (saleOrderItemId) {
       try {
-        const response = await productItemService.show(saleOrderItemId);
+        const response = await productNGService.show(saleOrderItemId);
         if (response.data.data.length > 0) {
-          setProductItems(response.data.data);
+          setProductNG(response.data.data);
         } else {
-          setProductItems([]);
+          setProductNG([]);
         }
       } catch (error) {
         Message("error", "Error fetching product items: " + error.message);
@@ -51,11 +50,9 @@ const SizeColorModal = () => {
     }
   }, [saleOrderItem, form]);
 
-  const dispatch = useDispatch();
-
   const handleCloseModal = () => {
-    dispatch(closeModalProductItem());
-    setProductItems([]);
+    dispatch(closeModalProductNG());
+    setProductNG([]);
   };
 
   const handleOk = () => {
@@ -63,21 +60,16 @@ const SizeColorModal = () => {
   };
 
   const handleSave = async () => {
-    const dataSave = productItems.filter((item) => item.id === undefined);
-    const dataUpdate = productItems.filter((item) => item.id !== undefined);
+    const dataSave = productNG.filter((item) => item.id === undefined);
+    const dataUpdate = productNG.filter((item) => item.id !== undefined);
 
-    if (
-      dataSave.length > 0 &&
-      dataSave[0].size_id &&
-      dataSave[0].color_id &&
-      dataSave[0].quantity
-    ) {
+    if (dataSave.length > 0 && dataSave[0].ng_type_id) {
       try {
-        const response = await productItemService.store({
-          size_color_quantity: dataSave,
+        const response = await productNGService.store({
+          product_ng: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
-        getProductItem();
+        getProductNG();
         Message(response.type, response.message);
       } catch (error) {
         Message("error", "Error saving new items: " + error.message);
@@ -85,9 +77,7 @@ const SizeColorModal = () => {
     }
 
     if (dataUpdate.length > 0) {
-      const hasInvalidItemsUpdate = dataUpdate.some(
-        (item) => !item.color_id || !item.size_id || !item.quantity
-      );
+      const hasInvalidItemsUpdate = dataUpdate.some((item) => !item.ng_type_id);
 
       if (hasInvalidItemsUpdate) {
         Message("error", "Please fill in required fields for existing items");
@@ -97,10 +87,8 @@ const SizeColorModal = () => {
       try {
         await Promise.all(
           dataUpdate.map((item) =>
-            productItemService.update(item.id, {
-              size_id: item.size_id,
-              color_id: item.color_id,
-              quantity: item.quantity,
+            productNGService.update(item.id, {
+              ng_type_id: item.ng_type_id,
               description: item.description,
             })
           )
@@ -113,48 +101,30 @@ const SizeColorModal = () => {
   };
 
   const handleInputTableChange = (e, key, column) => {
-    const newProductItems = [...productItems];
-    const index = newProductItems.findIndex((item) => key === item.key);
-    newProductItems[index][column] = e.target.value;
-    setProductItems(newProductItems);
+    const newProductProcess = [...productNG];
+    const index = newProductProcess.findIndex((item) => key === item.key);
+    newProductProcess[index][column] = e.target.value;
+    setProductNG(newProductProcess);
   };
 
   const handleOptionTableChange = (value, key, column) => {
-    const newProductItems = [...productItems];
-    const index = newProductItems.findIndex((item) => key === item.key);
+    const newProductProcess = [...productNG];
+    const index = newProductProcess.findIndex((item) => key === item.key);
     if (index !== -1) {
-      newProductItems[index][column] = value;
-      setProductItems(newProductItems);
+      newProductProcess[index][column] = value;
+      setProductNG(newProductProcess);
     }
   };
 
-  const getSizes = async () => {
+  const getNGs = async () => {
     try {
-      const response = await sizesService.index(null);
-      const data = response?.map((size, index) => ({
-        ...size,
+      const response = await NGService.index(null);
+      const data = response?.map((items, index) => ({
+        ...items,
         key: index,
       }));
 
-      setSizes(data);
-    } catch (error) {
-      Message(
-        "error",
-        "Error fetching sizes: " +
-          (error.response ? error.response.data : error.message)
-      );
-    }
-  };
-
-  const getColors = async () => {
-    try {
-      const response = await colorsService.index(null);
-      const data = response?.map((color, index) => ({
-        ...color,
-        key: index,
-      }));
-
-      setColors(data);
+      setNG(data);
     } catch (error) {
       Message(
         "error",
@@ -166,75 +136,36 @@ const SizeColorModal = () => {
 
   useEffect(() => {
     if (isModalOpen && saleOrderItem && saleOrderItem.length > 0) {
-      getProductItem(saleOrderItem[0]?.id);
-      getSizes();
-      getColors();
+      getProductNG(saleOrderItem[0]?.id);
+      getNGs();
     } else {
-      setProductItems([]);
+      setProductNG([]);
     }
   }, [saleOrderItem, isModalOpen]);
 
   const columns = [
     {
-      title: "Color",
-      dataIndex: "color_id",
-      key: "color_id",
+      title: "NG Type",
+      dataIndex: "ng_type_id",
+      key: "ng_type_id",
       width: "12%",
       render: (value, record) => (
         <Select
-          name={`color_id[${record.key}]`}
-          placeholder="Select a color"
+          name={`ng_type_id[${record.key}]`}
+          placeholder="Select a NG"
           onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "color_id")
+            handleOptionTableChange(newValue, record.key, "ng_type_id")
           }
           allowClear
-          value={record.color_id}
+          value={record.ng_type_id}
           style={{ width: "100%" }}
         >
-          {colors.map((item) => (
+          {NG.map((item) => (
             <Option key={item.id} value={item.id}>
               {item.name}
             </Option>
           ))}
         </Select>
-      ),
-    },
-    {
-      title: "Size",
-      dataIndex: "size_id",
-      key: "size_id",
-      width: "12%",
-      render: (value, record) => (
-        <Select
-          name={`size_id[${record.key}]`}
-          placeholder="Select a size"
-          onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "size_id")
-          }
-          allowClear
-          value={record.size_id}
-          style={{ width: "100%" }}
-        >
-          {sizes.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
-      width: "13%",
-      render: (value, record) => (
-        <Input
-          name={`quantity[${record.id}]`}
-          type="number"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "quantity")}
-        />
       ),
     },
     {
@@ -265,10 +196,10 @@ const SizeColorModal = () => {
   const handleDelete = async (id, key) => {
     try {
       if (id) {
-        await productItemService.destroy(id);
-        setProductItems(productItems.filter((item) => item.id !== id));
+        await productNGService.destroy(id);
+        setProductNG(productNG.filter((item) => item.id !== id));
       } else {
-        setProductItems(productItems.filter((item) => item.key !== key));
+        setProductNG(productNG.filter((item) => item.key !== key));
       }
       Message("success", "Delete success");
     } catch (error) {
@@ -281,17 +212,19 @@ const SizeColorModal = () => {
   };
 
   const handleAddRow = async () => {
-    const newKey = productItems.length + 1;
+    const newKey = productNG.length + 1;
     const newRow = {
       key: newKey,
+      ng_type_id: null,
+      description: "",
     };
-    setProductItems([...productItems, newRow]);
+    setProductNG([...productNG, newRow]);
   };
 
   return (
     <>
       <Modal
-        title="Size Color Quantity"
+        title="NG Type"
         open={isModalOpen}
         onOk={handleOk}
         width={1000}
@@ -342,13 +275,13 @@ const SizeColorModal = () => {
             pagination={{
               current: currentPage,
               pageSize: 3,
-              total: productItems.length,
+              total: productNG.length,
               onChange: (page) => {
                 setCurrentPage(page);
               },
             }}
             columns={columns}
-            dataSource={productItems}
+            dataSource={productNG}
           />
         </Content>
 
@@ -358,4 +291,4 @@ const SizeColorModal = () => {
   );
 };
 
-export default SizeColorModal;
+export default NGModal;

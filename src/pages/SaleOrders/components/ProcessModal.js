@@ -6,22 +6,12 @@ import { Layout, theme, Table, Select } from "antd";
 import { Form, Input } from "antd";
 import { useMessage } from "../../../hooks/useMessage";
 import * as processesService from "../../../services/processes";
-import * as productItemService from "../../../services/product_items";
+import * as productProcessService from "../../../services/product_processes";
 import BtnAddRow from "../../../components/Button/BtnAddRow";
 import BtnSave from "../../../components/Button/BtnSave";
 import BtnDelete from "../../../components/Button/BtnDelete";
 const SizeColorModal = () => {
-  const initialPeoductProcessState = [
-    {
-      key: 1,
-      process_id: null,
-      std_workTime: null,
-      description: "",
-    },
-  ];
-  const [productProcess, setProductProcess] = useState(
-    initialPeoductProcessState
-  );
+  const [productProcess, setProductProcess] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [process, setProcess] = useState([]);
   const { Message, contextHolder } = useMessage();
@@ -35,11 +25,17 @@ const SizeColorModal = () => {
   const isModalOpen = useSelector((state) => state.modal.isOpenProductProcess);
   const saleOrderItem = useSelector((state) => state.modal.saleOrder);
 
-  const getProductProcess = async () => {
-    if (saleOrderItem.length > 0) {
-      const response = await productItemService.show(saleOrderItem[0].id);
-      if (response.data.data.length > 0) {
-        setProductProcess(response.data.data);
+  const getProductProcess = async (saleOrderItemId) => {
+    if (saleOrderItemId) {
+      try {
+        const response = await productProcessService.show(saleOrderItemId);
+        if (response.data.data.length > 0) {
+          setProductProcess(response.data.data);
+        } else {
+          setProductProcess([]);
+        }
+      } catch (error) {
+        Message("error", "Error fetching product items: " + error.message);
       }
     }
   };
@@ -56,7 +52,7 @@ const SizeColorModal = () => {
 
   const handleCloseModal = () => {
     dispatch(closeModalProductProcess());
-    setProductProcess(initialPeoductProcessState);
+    setProductProcess([]);
   };
 
   const handleOk = () => {
@@ -73,7 +69,7 @@ const SizeColorModal = () => {
       dataSave[0].std_workTime
     ) {
       try {
-        const response = await productItemService.store({
+        const response = await productProcessService.store({
           product_process: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
@@ -97,7 +93,7 @@ const SizeColorModal = () => {
       try {
         await Promise.all(
           dataUpdate.map((item) =>
-            productItemService.update(item.id, {
+            productProcessService.update(item.id, {
               process_id: item.process_id,
               std_workTime: item.std_workTime,
               description: item.description,
@@ -146,9 +142,13 @@ const SizeColorModal = () => {
   };
 
   useEffect(() => {
-    getProcesses();
-    getProductProcess();
-  }, [isModalOpen]);
+    if (isModalOpen && saleOrderItem && saleOrderItem.length > 0) {
+      getProductProcess(saleOrderItem[0]?.id);
+      getProcesses();
+    } else {
+      setProductProcess([]);
+    }
+  }, [saleOrderItem, isModalOpen]);
 
   const columns = [
     {
@@ -219,7 +219,7 @@ const SizeColorModal = () => {
   const handleDelete = async (id, key) => {
     try {
       if (id) {
-        await productItemService.destroy(id);
+        await productProcessService.destroy(id);
         setProductProcess(productProcess.filter((item) => item.id !== id));
       } else {
         setProductProcess(productProcess.filter((item) => item.key !== key));
@@ -284,10 +284,6 @@ const SizeColorModal = () => {
           >
             <Form.Item name="code" label="No." className="py-2">
               <Input name="code" type="text" readOnly />
-            </Form.Item>
-
-            <Form.Item name="product" label="Product" className="py-2">
-              <Input type="text" name="product" readOnly />
             </Form.Item>
           </Form>
         </Content>

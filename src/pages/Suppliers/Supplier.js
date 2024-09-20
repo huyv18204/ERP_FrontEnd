@@ -1,78 +1,51 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
-import { Form, Input, Select } from "antd";
-import * as employeeService from "../../services/employees";
-import * as departmentService from "../../services/departments";
+import { Form, Input } from "antd";
+import * as suppliersService from "../../services/suppliers";
 import { useMessage } from "../../hooks/useMessage";
 import BtnClear from "../../components/Button/BtnClear";
 import BtnQuery from "../../components/Button/BtnQuery";
 import BtnSave from "../../components/Button/BtnSave";
 import BtnDelete from "../../components/Button/BtnDelete";
-const Employee = () => {
-  const initialEmployeeState = {
+const Supplier = () => {
+  const initialState = {
     name: "",
     phone: "",
     address: "",
-    work_date: "",
-    department_id: "",
   };
-  const [employee, setEmployee] = useState(initialEmployeeState);
+  const [supplier, setSupplier] = useState(initialState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [employees, setEmployees] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [changedEmployees, setChangedEmployees] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [changedValue, setChangedValue] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
-  const { Option } = Select;
   const [form] = Form.useForm();
 
   const handleInputTableChange = (e, key, column) => {
-    const newEmployees = [...employees];
-    const index = newEmployees.findIndex((item) => key === item.key);
-    newEmployees[index][column] = e.target.value;
-    setEmployees(newEmployees);
+    const newValues = [...suppliers];
+    const index = newValues.findIndex((item) => key === item.key);
+    newValues[index][column] = e.target.value;
+    setSuppliers(newValues);
 
     // Cập nhật danh sách các bản ghi đã thay đổi
-    setChangedEmployees((prev) => {
+    setChangedValue((prev) => {
       const isExisting = prev.some((item) => item.key === key);
       if (!isExisting) {
-        return [...prev, newEmployees[index]];
+        return [...prev, newValues[index]];
       }
-      return prev.map((item) =>
-        item.key === key ? newEmployees[index] : item
-      );
+      return prev.map((item) => (item.key === key ? newValues[index] : item));
     });
-  };
-
-  const handleOptionTableChange = (value, key, column) => {
-    const newEmployees = [...employees];
-    const index = newEmployees.findIndex((item) => key === item.key);
-    if (index !== -1) {
-      newEmployees[index][column] = value;
-      setEmployees(newEmployees);
-
-      setChangedEmployees((prev) => {
-        const isExisting = prev.some((item) => item.key === key);
-        if (!isExisting) {
-          return [...prev, newEmployees[index]];
-        }
-        return prev.map((item) =>
-          item.key === key ? newEmployees[index] : item
-        );
-      });
-    }
   };
 
   const columns = [
     {
       title: "No.",
-      dataIndex: "employee_code",
-      key: "employee_code",
-      width: "9%",
-      ...getColumnSearch("employee_code"),
-      fixed: "left",
+      dataIndex: "code",
+      key: "code",
+      width: "10%",
+      ...getColumnSearch("code"),
     },
     {
       title: "Name",
@@ -106,47 +79,7 @@ const Employee = () => {
         />
       ),
     },
-    {
-      title: "Department",
-      dataIndex: "department",
-      key: "department",
-      width: "12%",
-      ...getColumnSearch("department"),
-      render: (value, record) => (
-        <Select
-          name={`department_id[${record.key}]`}
-          placeholder="Select a department"
-          onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "department_id")
-          }
-          allowClear
-          value={record.department_id}
-          style={{ minWidth: 130 }}
-        >
-          {departments.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      title: "Work Date",
-      dataIndex: "work_date",
-      key: "work_date",
-      width: "11%",
-      ...getColumnSearch("work_date"),
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`work_date[${record.key}]`}
-          type="date"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "work_date")}
-        />
-      ),
-    },
+
     {
       title: "Address",
       dataIndex: "address",
@@ -182,32 +115,24 @@ const Employee = () => {
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
-    setEmployee((prev) => ({
+    setSupplier((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleOptionFormChange = (value) => {
-    setEmployee((prev) => ({
-      ...prev,
-      department_id: value,
-    }));
-  };
-
   const handleQuery = async () => {
     try {
-      const response = await employeeService.index(employee);
-      const data = response?.map((employee, index) => ({
-        ...employee,
+      const response = await suppliersService.index(supplier);
+      const data = response?.map((supplier, index) => ({
+        ...supplier,
         key: index,
-        department: employee.department.name,
       }));
-      setEmployees(data);
+      setSuppliers(data);
     } catch (error) {
       Message(
         "error",
-        "Error fetching employees: " +
+        "Error fetching suppliers: " +
           (error.response ? error.response.data : error.message)
       );
     }
@@ -215,27 +140,26 @@ const Employee = () => {
 
   const handleSave = useCallback(async () => {
     try {
-      if (changedEmployees.length > 0) {
-        for (const emp of changedEmployees) {
-          if (emp && emp.name && emp.department_id) {
-            const res = await employeeService.update(emp.id, emp);
+      if (changedValue.length > 0) {
+        for (const cust of changedValue) {
+          if (cust && cust.name && cust.phone) {
+            const res = await suppliersService.update(cust.id, cust);
             Message("success", res.message);
           } else {
             Message("error", "Please fill in required fields");
           }
         }
-        setChangedEmployees([]);
+        setChangedValue([]);
       } else {
-        if (employee && employee.name && employee.department_id) {
-          const data = await employeeService.store(employee);
-          const newEmployee = {
+        if (supplier && supplier.name && supplier.phone) {
+          const data = await suppliersService.store(supplier);
+          const newValue = {
             ...data,
-            key: data.employee_code,
-            department: data.department ? data.department.name : "",
+            key: data.code,
           };
-          setEmployees([newEmployee]);
+          setSuppliers([newValue]);
           handleClear();
-          Message("success", "Add new employee success");
+          Message("success", "Add new supplier success");
         } else {
           Message("error", "Please fill in required fields");
         }
@@ -247,12 +171,12 @@ const Employee = () => {
           (error.response ? error.response.data : error.message)
       );
     }
-  }, [employee, employees]);
+  }, [supplier, suppliers]);
 
   const handleDelete = useCallback(
     async (id) => {
       try {
-        await employeeService.destroy(id);
+        await suppliersService.destroy(id);
         Message("success", "Delete success");
         handleQuery();
       } catch (error) {
@@ -263,26 +187,17 @@ const Employee = () => {
         );
       }
     },
-    [employees]
+    [suppliers]
   );
 
   const handleClear = () => {
-    setEmployee(initialEmployeeState);
+    setSupplier(initialState);
     form.resetFields();
   };
 
-  const getDepartment = async () => {
-    const data = await departmentService.index();
-    setDepartments(data);
-  };
-
   useEffect(() => {
-    getDepartment();
-  }, []);
-
-  useEffect(() => {
-    form.setFieldsValue(employee);
-  }, [employee, form]);
+    form.setFieldsValue(supplier);
+  }, [supplier, form]);
   return (
     <div>
       <Content
@@ -333,15 +248,25 @@ const Employee = () => {
               name="name"
               onChange={handleInputFormChange}
               type="text"
-              value={employee.name}
+              value={supplier.name}
               placeholder="Enter Name"
             />
           </Form.Item>
-          <Form.Item name="phone" label="Phone" className="py-2">
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: "Please input name",
+              },
+            ]}
+            name="phone"
+            label="Phone"
+            className="py-2"
+          >
             <Input
               name="phone"
               onChange={handleInputFormChange}
-              value={employee.phone}
+              value={supplier.phone}
               placeholder="Enter Phone"
             />
           </Form.Item>
@@ -351,44 +276,9 @@ const Employee = () => {
               name="address"
               onChange={handleInputFormChange}
               type="text"
-              value={employee.address}
+              value={supplier.address}
               style={{ width: 350 }}
               placeholder="Enter Address"
-            />
-          </Form.Item>
-
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input department",
-              },
-            ]}
-            name="department"
-            label="Department"
-            className="py-2"
-          >
-            <Select
-              style={{ width: 180 }}
-              name="department_id"
-              placeholder="Select a department"
-              onChange={handleOptionFormChange}
-              allowClear
-            >
-              {departments.map((item) => (
-                <Option key={item.id} value={item.id}>
-                  {item.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="work_date" label="Work Date" className="py-2">
-            <Input
-              name="work_date"
-              onChange={handleInputFormChange}
-              type="date"
-              value={employee.work_date}
             />
           </Form.Item>
         </Form>
@@ -400,27 +290,21 @@ const Employee = () => {
           padding: 24,
           paddingTop: 20,
           paddingBottom: 20,
-          // minHeight: 510,
           background: colorBgContainer,
           borderRadius: borderRadiusLG,
         }}
       >
         <Table
-          size="small"
-          scroll={{
-            x: 1500,
-            y: 350,
-          }}
           pagination={{
             current: currentPage,
             pageSize: 5,
-            total: employees.length,
+            total: suppliers.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={employees}
+          dataSource={suppliers}
         />
       </Content>
 
@@ -429,4 +313,4 @@ const Employee = () => {
   );
 };
 
-export default Employee;
+export default Supplier;

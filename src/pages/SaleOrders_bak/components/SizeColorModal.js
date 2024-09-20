@@ -328,6 +328,10 @@ const SizeColorModal = () => {
             <Form.Item name="code" label="No." className="py-2">
               <Input name="code" type="text" readOnly />
             </Form.Item>
+
+            <Form.Item name="product" label="Product" className="py-2">
+              <Input type="text" name="product" readOnly />
+            </Form.Item>
           </Form>
         </Content>
 

@@ -1,39 +1,38 @@
 import { Modal } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { closeModalProductItem } from "../../../redux/actions/modalAction";
+import { closeModalProductProcess } from "../../../redux/actions/modalAction";
 import React, { useEffect, useState } from "react";
 import { Layout, theme, Table, Select } from "antd";
 import { Form, Input } from "antd";
 import { useMessage } from "../../../hooks/useMessage";
-import * as sizesService from "../../../services/sizes";
-import * as colorsService from "../../../services/colors";
-import * as productItemService from "../../../services/product_items";
+import * as processesService from "../../../services/processes";
+import * as productProcessService from "../../../services/product_processes";
 import BtnAddRow from "../../../components/Button/BtnAddRow";
 import BtnSave from "../../../components/Button/BtnSave";
 import BtnDelete from "../../../components/Button/BtnDelete";
 const SizeColorModal = () => {
-  const [productItems, setProductItems] = useState([]);
+  const [productProcess, setProductProcess] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sizes, setSizes] = useState([]);
-  const [colors, setColors] = useState([]);
+  const [process, setProcess] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { Content } = Layout;
   const [form] = Form.useForm();
   const { Option } = Select;
+  const dispatch = useDispatch();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const isModalOpen = useSelector((state) => state.modal.isOpenProductItem);
+  const isModalOpen = useSelector((state) => state.modal.isOpenProductProcess);
   const saleOrderItem = useSelector((state) => state.modal.saleOrder);
 
-  const getProductItem = async (saleOrderItemId) => {
+  const getProductProcess = async (saleOrderItemId) => {
     if (saleOrderItemId) {
       try {
-        const response = await productItemService.show(saleOrderItemId);
+        const response = await productProcessService.show(saleOrderItemId);
         if (response.data.data.length > 0) {
-          setProductItems(response.data.data);
+          setProductProcess(response.data.data);
         } else {
-          setProductItems([]);
+          setProductProcess([]);
         }
       } catch (error) {
         Message("error", "Error fetching product items: " + error.message);
@@ -51,11 +50,9 @@ const SizeColorModal = () => {
     }
   }, [saleOrderItem, form]);
 
-  const dispatch = useDispatch();
-
   const handleCloseModal = () => {
-    dispatch(closeModalProductItem());
-    setProductItems([]);
+    dispatch(closeModalProductProcess());
+    setProductProcess([]);
   };
 
   const handleOk = () => {
@@ -63,21 +60,20 @@ const SizeColorModal = () => {
   };
 
   const handleSave = async () => {
-    const dataSave = productItems.filter((item) => item.id === undefined);
-    const dataUpdate = productItems.filter((item) => item.id !== undefined);
+    const dataSave = productProcess.filter((item) => item.id === undefined);
+    const dataUpdate = productProcess.filter((item) => item.id !== undefined);
 
     if (
       dataSave.length > 0 &&
-      dataSave[0].size_id &&
-      dataSave[0].color_id &&
-      dataSave[0].quantity
+      dataSave[0].process_id &&
+      dataSave[0].std_workTime
     ) {
       try {
-        const response = await productItemService.store({
-          size_color_quantity: dataSave,
+        const response = await productProcessService.store({
+          product_process: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
-        getProductItem();
+        getProductProcess();
         Message(response.type, response.message);
       } catch (error) {
         Message("error", "Error saving new items: " + error.message);
@@ -86,7 +82,7 @@ const SizeColorModal = () => {
 
     if (dataUpdate.length > 0) {
       const hasInvalidItemsUpdate = dataUpdate.some(
-        (item) => !item.color_id || !item.size_id || !item.quantity
+        (item) => !item.process_id || !item.std_workTime
       );
 
       if (hasInvalidItemsUpdate) {
@@ -97,10 +93,9 @@ const SizeColorModal = () => {
       try {
         await Promise.all(
           dataUpdate.map((item) =>
-            productItemService.update(item.id, {
-              size_id: item.size_id,
-              color_id: item.color_id,
-              quantity: item.quantity,
+            productProcessService.update(item.id, {
+              process_id: item.process_id,
+              std_workTime: item.std_workTime,
               description: item.description,
             })
           )
@@ -113,48 +108,30 @@ const SizeColorModal = () => {
   };
 
   const handleInputTableChange = (e, key, column) => {
-    const newProductItems = [...productItems];
-    const index = newProductItems.findIndex((item) => key === item.key);
-    newProductItems[index][column] = e.target.value;
-    setProductItems(newProductItems);
+    const newProductProcess = [...productProcess];
+    const index = newProductProcess.findIndex((item) => key === item.key);
+    newProductProcess[index][column] = e.target.value;
+    setProductProcess(newProductProcess);
   };
 
   const handleOptionTableChange = (value, key, column) => {
-    const newProductItems = [...productItems];
-    const index = newProductItems.findIndex((item) => key === item.key);
+    const newProductProcess = [...productProcess];
+    const index = newProductProcess.findIndex((item) => key === item.key);
     if (index !== -1) {
-      newProductItems[index][column] = value;
-      setProductItems(newProductItems);
+      newProductProcess[index][column] = value;
+      setProductProcess(newProductProcess);
     }
   };
 
-  const getSizes = async () => {
+  const getProcesses = async () => {
     try {
-      const response = await sizesService.index(null);
-      const data = response?.map((size, index) => ({
-        ...size,
+      const response = await processesService.index(null);
+      const data = response?.map((items, index) => ({
+        ...items,
         key: index,
       }));
 
-      setSizes(data);
-    } catch (error) {
-      Message(
-        "error",
-        "Error fetching sizes: " +
-          (error.response ? error.response.data : error.message)
-      );
-    }
-  };
-
-  const getColors = async () => {
-    try {
-      const response = await colorsService.index(null);
-      const data = response?.map((color, index) => ({
-        ...color,
-        key: index,
-      }));
-
-      setColors(data);
+      setProcess(data);
     } catch (error) {
       Message(
         "error",
@@ -166,32 +143,31 @@ const SizeColorModal = () => {
 
   useEffect(() => {
     if (isModalOpen && saleOrderItem && saleOrderItem.length > 0) {
-      getProductItem(saleOrderItem[0]?.id);
-      getSizes();
-      getColors();
+      getProductProcess(saleOrderItem[0]?.id);
+      getProcesses();
     } else {
-      setProductItems([]);
+      setProductProcess([]);
     }
   }, [saleOrderItem, isModalOpen]);
 
   const columns = [
     {
-      title: "Color",
-      dataIndex: "color_id",
-      key: "color_id",
+      title: "Process",
+      dataIndex: "process_id",
+      key: "process_id",
       width: "12%",
       render: (value, record) => (
         <Select
-          name={`color_id[${record.key}]`}
-          placeholder="Select a color"
+          name={`process_id[${record.key}]`}
+          placeholder="Select a process"
           onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "color_id")
+            handleOptionTableChange(newValue, record.key, "process_id")
           }
           allowClear
-          value={record.color_id}
+          value={record.process_id}
           style={{ width: "100%" }}
         >
-          {colors.map((item) => (
+          {process.map((item) => (
             <Option key={item.id} value={item.id}>
               {item.name}
             </Option>
@@ -200,40 +176,18 @@ const SizeColorModal = () => {
       ),
     },
     {
-      title: "Size",
-      dataIndex: "size_id",
-      key: "size_id",
-      width: "12%",
-      render: (value, record) => (
-        <Select
-          name={`size_id[${record.key}]`}
-          placeholder="Select a size"
-          onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "size_id")
-          }
-          allowClear
-          value={record.size_id}
-          style={{ width: "100%" }}
-        >
-          {sizes.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
+      title: "Std Work Time",
+      dataIndex: "std_workTime",
+      key: "std_workTime",
       width: "13%",
       render: (value, record) => (
         <Input
-          name={`quantity[${record.id}]`}
+          name={`std_workTime[${record.id}]`}
           type="number"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "quantity")}
+          onChange={(e) =>
+            handleInputTableChange(e, record.key, "std_workTime")
+          }
         />
       ),
     },
@@ -265,10 +219,10 @@ const SizeColorModal = () => {
   const handleDelete = async (id, key) => {
     try {
       if (id) {
-        await productItemService.destroy(id);
-        setProductItems(productItems.filter((item) => item.id !== id));
+        await productProcessService.destroy(id);
+        setProductProcess(productProcess.filter((item) => item.id !== id));
       } else {
-        setProductItems(productItems.filter((item) => item.key !== key));
+        setProductProcess(productProcess.filter((item) => item.key !== key));
       }
       Message("success", "Delete success");
     } catch (error) {
@@ -281,17 +235,20 @@ const SizeColorModal = () => {
   };
 
   const handleAddRow = async () => {
-    const newKey = productItems.length + 1;
+    const newKey = productProcess.length + 1;
     const newRow = {
       key: newKey,
+      process_id: null,
+      std_workTime: null,
+      description: "",
     };
-    setProductItems([...productItems, newRow]);
+    setProductProcess([...productProcess, newRow]);
   };
 
   return (
     <>
       <Modal
-        title="Size Color Quantity"
+        title="Routing"
         open={isModalOpen}
         onOk={handleOk}
         width={1000}
@@ -328,6 +285,10 @@ const SizeColorModal = () => {
             <Form.Item name="code" label="No." className="py-2">
               <Input name="code" type="text" readOnly />
             </Form.Item>
+
+            <Form.Item name="product" label="Product" className="py-2">
+              <Input type="text" name="product" readOnly />
+            </Form.Item>
           </Form>
         </Content>
 
@@ -342,13 +303,13 @@ const SizeColorModal = () => {
             pagination={{
               current: currentPage,
               pageSize: 3,
-              total: productItems.length,
+              total: productProcess.length,
               onChange: (page) => {
                 setCurrentPage(page);
               },
             }}
             columns={columns}
-            dataSource={productItems}
+            dataSource={productProcess}
           />
         </Content>
 

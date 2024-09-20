@@ -2,60 +2,56 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input } from "antd";
-import * as customersService from "../../services/customers";
+import * as productsService from "../../services/products";
 import { useMessage } from "../../hooks/useMessage";
 import BtnClear from "../../components/Button/BtnClear";
 import BtnQuery from "../../components/Button/BtnQuery";
 import BtnSave from "../../components/Button/BtnSave";
 import BtnDelete from "../../components/Button/BtnDelete";
-const Customer = () => {
-  const initialCustomerState = {
+const Product = () => {
+  const initialState = {
     name: "",
-    phone: "",
-    address: "",
-    fax: "",
+    unit_price: "",
+    description: "",
   };
-  const [customer, setCustomer] = useState(initialCustomerState);
+  const [product, setProduct] = useState(initialState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [customers, setCustomers] = useState([]);
-  const [changedCustomers, setChangedCustomers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [changedValue, setChangedValue] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
   const [form] = Form.useForm();
 
   const handleInputTableChange = (e, key, column) => {
-    const newCustomers = [...customers];
-    const index = newCustomers.findIndex((item) => key === item.key);
-    newCustomers[index][column] = e.target.value;
-    setCustomers(newCustomers);
+    const newValues = [...products];
+    const index = newValues.findIndex((item) => key === item.key);
+    newValues[index][column] = e.target.value;
+    setProducts(newValues);
 
     // Cập nhật danh sách các bản ghi đã thay đổi
-    setChangedCustomers((prev) => {
+    setChangedValue((prev) => {
       const isExisting = prev.some((item) => item.key === key);
       if (!isExisting) {
-        return [...prev, newCustomers[index]];
+        return [...prev, newValues[index]];
       }
-      return prev.map((item) =>
-        item.key === key ? newCustomers[index] : item
-      );
+      return prev.map((item) => (item.key === key ? newValues[index] : item));
     });
   };
 
   const columns = [
     {
       title: "No.",
-      dataIndex: "customer_code",
-      key: "customer_code",
-      width: "10%",
-      ...getColumnSearch("customer_code"),
-      fixed: "left",
+      dataIndex: "code",
+      key: "code",
+      width: "15%",
+      ...getColumnSearch("code"),
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: "16%",
+      width: "20%",
       ...getColumnSearch("name"),
       render: (value, record) => (
         <Input
@@ -68,51 +64,36 @@ const Customer = () => {
       ),
     },
     {
-      title: "Phone",
-      dataIndex: "phone",
-      key: "phone",
-      width: "15%",
-      ...getColumnSearch("phone"),
+      title: "Unit Price",
+      dataIndex: "unit_price",
+      key: "unit_price",
+      width: "20%",
+      ...getColumnSearch("unit_price"),
       render: (value, record) => (
         <Input
           className="input-no-border"
-          name={`phone[${record.key}]`}
+          name={`unit_price[${record.key}]`}
           type="text"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "phone")}
+          onChange={(e) => handleInputTableChange(e, record.key, "unit_price")}
         />
       ),
     },
+
     {
-      title: "Fax",
-      dataIndex: "fax",
-      key: "fax",
-      width: "15%",
-      ...getColumnSearch("fax"),
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`fax[${record.key}]`}
-          type="text"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "fax")}
-        />
-      ),
-    },
-    {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
-      ...getColumnSearch("address"),
-      sorter: (a, b) => a.address.length - b.address.length,
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      ...getColumnSearch("description"),
+      sorter: (a, b) => a.description.length - b.description.length,
       sortDirections: ["descend", "ascend"],
       render: (value, record) => (
         <Input
           className="input-no-border"
-          name={`address[${record.key}]`}
+          name={`description[${record.key}]`}
           type="text"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "address")}
+          onChange={(e) => handleInputTableChange(e, record.key, "description")}
         />
       ),
     },
@@ -134,7 +115,7 @@ const Customer = () => {
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
-    setCustomer((prev) => ({
+    setProduct((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -142,16 +123,16 @@ const Customer = () => {
 
   const handleQuery = async () => {
     try {
-      const response = await customersService.index(customer);
-      const data = response?.map((customer, index) => ({
-        ...customer,
+      const response = await productsService.index(product);
+      const data = response?.map((product, index) => ({
+        ...product,
         key: index,
       }));
-      setCustomers(data);
+      setProducts(data);
     } catch (error) {
       Message(
         "error",
-        "Error fetching customers: " +
+        "Error fetching products: " +
           (error.response ? error.response.data : error.message)
       );
     }
@@ -159,26 +140,26 @@ const Customer = () => {
 
   const handleSave = useCallback(async () => {
     try {
-      if (changedCustomers.length > 0) {
-        for (const cust of changedCustomers) {
-          if (cust && cust.name && cust.phone && cust.fax) {
-            const res = await customersService.update(cust.id, cust);
+      if (changedValue.length > 0) {
+        for (const cust of changedValue) {
+          if (cust && cust.name && cust.unit_price) {
+            const res = await productsService.update(cust.id, cust);
             Message("success", res.message);
           } else {
             Message("error", "Please fill in required fields");
           }
         }
-        setChangedCustomers([]);
+        setChangedValue([]);
       } else {
-        if (customer && customer.name && customer.fax && customer.phone) {
-          const data = await customersService.store(customer);
-          const newCustomer = {
+        if (product && product.name && product.unit_price) {
+          const data = await productsService.store(product);
+          const newValue = {
             ...data,
-            key: data.employee_code,
+            key: data.code,
           };
-          setCustomers([newCustomer]);
+          setProducts([newValue]);
           handleClear();
-          Message("success", "Add new customer success");
+          Message("success", "Add new product success");
         } else {
           Message("error", "Please fill in required fields");
         }
@@ -190,12 +171,12 @@ const Customer = () => {
           (error.response ? error.response.data : error.message)
       );
     }
-  }, [customer, customers]);
+  }, [product, products]);
 
   const handleDelete = useCallback(
     async (id) => {
       try {
-        await customersService.destroy(id);
+        await productsService.destroy(id);
         Message("success", "Delete success");
         handleQuery();
       } catch (error) {
@@ -206,17 +187,17 @@ const Customer = () => {
         );
       }
     },
-    [customers]
+    [products]
   );
 
   const handleClear = () => {
-    setCustomer(initialCustomerState);
+    setProduct(initialState);
     form.resetFields();
   };
 
   useEffect(() => {
-    form.setFieldsValue(customer);
-  }, [customer, form]);
+    form.setFieldsValue(product);
+  }, [product, form]);
   return (
     <div>
       <Content
@@ -267,7 +248,7 @@ const Customer = () => {
               name="name"
               onChange={handleInputFormChange}
               type="text"
-              value={customer.name}
+              value={product.name}
               placeholder="Enter Name"
             />
           </Form.Item>
@@ -278,44 +259,24 @@ const Customer = () => {
                 message: "Please input name",
               },
             ]}
-            name="phone"
-            label="Phone"
+            name="unit_price"
+            label="Unit Price"
             className="py-2"
           >
             <Input
-              name="phone"
+              name="unit_price"
               onChange={handleInputFormChange}
-              value={customer.phone}
+              value={product.unit_price}
               placeholder="Enter Phone"
             />
           </Form.Item>
 
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input name",
-              },
-            ]}
-            name="fax"
-            label="Fax"
-            className="py-2"
-          >
+          <Form.Item name="description" label="Description" className="py-2">
             <Input
-              name="fax"
-              onChange={handleInputFormChange}
-              type="number"
-              value={customer.fax}
-              placeholder="Enter Fax"
-            />
-          </Form.Item>
-
-          <Form.Item name="address" label="Address" className="py-2">
-            <Input
-              name="address"
+              name="description"
               onChange={handleInputFormChange}
               type="text"
-              value={customer.address}
+              value={product.description}
               style={{ width: 350 }}
               placeholder="Enter Address"
             />
@@ -337,13 +298,13 @@ const Customer = () => {
           pagination={{
             current: currentPage,
             pageSize: 5,
-            total: customers.length,
+            total: products.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={customers}
+          dataSource={products}
         />
       </Content>
 
@@ -352,4 +313,4 @@ const Customer = () => {
   );
 };
 
-export default Customer;
+export default Product;

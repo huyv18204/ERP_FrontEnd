@@ -5,7 +5,6 @@ import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
 import * as employeeService from "../../services/sale_orders";
 import * as customerService from "../../services/customers";
-import * as productsService from "../../services/products";
 import { useMessage } from "../../hooks/useMessage";
 import BtnNew from "../../components/Button/BtnNew";
 import BtnSave from "../../components/Button/BtnSave";
@@ -45,13 +44,15 @@ const SaleOrderRegister = () => {
   const initialSaleOrderItemState = [
     {
       key: 1,
-      product_id: null,
+      product: "",
+      unit_price: null,
       delivery_date: "",
       description: "",
     },
     {
       key: 2,
-      product_id: null,
+      product: "",
+      unit_price: null,
       delivery_date: "",
       description: "",
     },
@@ -64,7 +65,6 @@ const SaleOrderRegister = () => {
     initialSaleOrderItemState
   );
   const [customers, setCustomers] = useState([]);
-  const [product, setProduct] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
@@ -78,39 +78,40 @@ const SaleOrderRegister = () => {
     setSaleOrderItems(newSaleOrders);
   };
 
-  const handleOptionTableChange = (value, key, column) => {
-    const newSaleOrders = [...saleOrderItems];
-    const index = newSaleOrders.findIndex((item) => key === item.key);
-    if (index !== -1) {
-      newSaleOrders[index][column] = value;
-      setSaleOrderItems(newSaleOrders);
-    }
-  };
-
   const columns = [
     {
       title: "Product Name",
-      dataIndex: "product_id",
-      key: "product_id",
+      dataIndex: "product",
+      key: "product",
       width: "16%",
-      ...getColumnSearch("product_id"),
+      ...getColumnSearch("product"),
       render: (value, record) => (
-        <Select
-          name={`product_id[${record.key}]`}
-          placeholder="Select a product"
-          onChange={(newValue) =>
-            handleOptionTableChange(newValue, record.key, "product_id")
-          }
-          allowClear
-          value={record.product_id}
-          style={{ minWidth: 130 }}
-        >
-          {product.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
+        <Input
+          className={isSaved ? "no-border" : ""}
+          readOnly={isSaved}
+          name={`product[${record.key}]`}
+          type="text"
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "product")}
+        />
+      ),
+    },
+    {
+      title: "Unit Price",
+      dataIndex: "unit_price",
+      key: "unit_price",
+      width: "16%",
+      ...getColumnSearch("unit_price"),
+      render: (value, record) => (
+        <Input
+          className={isSaved ? "no-border" : ""}
+          readOnly={isSaved}
+          name={`unit_price[${record.key}]`}
+          type="number"
+          min={0}
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "unit_price")}
+        />
       ),
     },
     {
@@ -225,7 +226,8 @@ const SaleOrderRegister = () => {
         saleOrder.customer_id &&
         saleOrder.order_date &&
         saleOrderItems &&
-        saleOrderItems[0].product_id
+        saleOrderItems[0].product &&
+        saleOrderItems[0].unit_price
       ) {
         const response = await employeeService.store({
           ...saleOrder,
@@ -260,21 +262,18 @@ const SaleOrderRegister = () => {
     setSaleOrder(initialSaleOrderState);
     form.resetFields();
   };
+
   const getCustomer = async () => {
     const data = await customerService.index();
     setCustomers(data);
-  };
-
-  const getProduct = async () => {
-    const data = await productsService.index();
-    setProduct(data);
   };
 
   const handleAddRow = async () => {
     const newKey = saleOrderItems.length + 1;
     const newRow = {
       key: newKey,
-      product_id: "",
+      product: "",
+      unit_price: null,
       description: "",
       delivery_date: "",
     };
@@ -283,7 +282,6 @@ const SaleOrderRegister = () => {
   };
   useEffect(() => {
     getCustomer();
-    getProduct();
   }, []);
 
   useEffect(() => {

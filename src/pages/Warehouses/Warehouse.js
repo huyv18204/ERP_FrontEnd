@@ -2,60 +2,55 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input } from "antd";
-import * as customersService from "../../services/customers";
+import * as warehouseService from "../../services/warehouses";
 import { useMessage } from "../../hooks/useMessage";
 import BtnClear from "../../components/Button/BtnClear";
 import BtnQuery from "../../components/Button/BtnQuery";
 import BtnSave from "../../components/Button/BtnSave";
 import BtnDelete from "../../components/Button/BtnDelete";
-const Customer = () => {
-  const initialCustomerState = {
+const Warehouse = () => {
+  const initialState = {
     name: "",
-    phone: "",
-    address: "",
-    fax: "",
+    description: "",
   };
-  const [customer, setCustomer] = useState(initialCustomerState);
+  const [warehouse, setWarehouse] = useState(initialState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [customers, setCustomers] = useState([]);
-  const [changedCustomers, setChangedCustomers] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [changedValue, setChangedValue] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
   const [form] = Form.useForm();
 
   const handleInputTableChange = (e, key, column) => {
-    const newCustomers = [...customers];
-    const index = newCustomers.findIndex((item) => key === item.key);
-    newCustomers[index][column] = e.target.value;
-    setCustomers(newCustomers);
+    const newValues = [...warehouses];
+    const index = newValues.findIndex((item) => key === item.key);
+    newValues[index][column] = e.target.value;
+    setWarehouses(newValues);
 
     // Cập nhật danh sách các bản ghi đã thay đổi
-    setChangedCustomers((prev) => {
+    setChangedValue((prev) => {
       const isExisting = prev.some((item) => item.key === key);
       if (!isExisting) {
-        return [...prev, newCustomers[index]];
+        return [...prev, newValues[index]];
       }
-      return prev.map((item) =>
-        item.key === key ? newCustomers[index] : item
-      );
+      return prev.map((item) => (item.key === key ? newValues[index] : item));
     });
   };
 
   const columns = [
     {
       title: "No.",
-      dataIndex: "customer_code",
-      key: "customer_code",
-      width: "10%",
-      ...getColumnSearch("customer_code"),
-      fixed: "left",
+      dataIndex: "code",
+      key: "code",
+      width: "20%",
+      ...getColumnSearch("code"),
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: "16%",
+      width: "30%",
       ...getColumnSearch("name"),
       render: (value, record) => (
         <Input
@@ -67,52 +62,21 @@ const Customer = () => {
         />
       ),
     },
+
     {
-      title: "Phone",
-      dataIndex: "phone",
-      key: "phone",
-      width: "15%",
-      ...getColumnSearch("phone"),
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`phone[${record.key}]`}
-          type="text"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "phone")}
-        />
-      ),
-    },
-    {
-      title: "Fax",
-      dataIndex: "fax",
-      key: "fax",
-      width: "15%",
-      ...getColumnSearch("fax"),
-      render: (value, record) => (
-        <Input
-          className="input-no-border"
-          name={`fax[${record.key}]`}
-          type="text"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "fax")}
-        />
-      ),
-    },
-    {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
-      ...getColumnSearch("address"),
-      sorter: (a, b) => a.address.length - b.address.length,
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      ...getColumnSearch("description"),
+      sorter: (a, b) => a.description.length - b.description.length,
       sortDirections: ["descend", "ascend"],
       render: (value, record) => (
         <Input
           className="input-no-border"
-          name={`address[${record.key}]`}
+          name={`description[${record.key}]`}
           type="text"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "address")}
+          onChange={(e) => handleInputTableChange(e, record.key, "description")}
         />
       ),
     },
@@ -134,7 +98,7 @@ const Customer = () => {
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
-    setCustomer((prev) => ({
+    setWarehouse((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -142,16 +106,16 @@ const Customer = () => {
 
   const handleQuery = async () => {
     try {
-      const response = await customersService.index(customer);
-      const data = response?.map((customer, index) => ({
-        ...customer,
+      const response = await warehouseService.index(warehouse);
+      const data = response?.map((warehouse, index) => ({
+        ...warehouse,
         key: index,
       }));
-      setCustomers(data);
+      setWarehouses(data);
     } catch (error) {
       Message(
         "error",
-        "Error fetching customers: " +
+        "Error fetching warehouses: " +
           (error.response ? error.response.data : error.message)
       );
     }
@@ -159,26 +123,26 @@ const Customer = () => {
 
   const handleSave = useCallback(async () => {
     try {
-      if (changedCustomers.length > 0) {
-        for (const cust of changedCustomers) {
-          if (cust && cust.name && cust.phone && cust.fax) {
-            const res = await customersService.update(cust.id, cust);
+      if (changedValue.length > 0) {
+        for (const cust of changedValue) {
+          if (cust && cust.name) {
+            const res = await warehouseService.update(cust.id, cust);
             Message("success", res.message);
           } else {
             Message("error", "Please fill in required fields");
           }
         }
-        setChangedCustomers([]);
+        setChangedValue([]);
       } else {
-        if (customer && customer.name && customer.fax && customer.phone) {
-          const data = await customersService.store(customer);
-          const newCustomer = {
+        if (warehouse && warehouse.name) {
+          const data = await warehouseService.store(warehouse);
+          const newValue = {
             ...data,
-            key: data.employee_code,
+            key: data.code,
           };
-          setCustomers([newCustomer]);
+          setWarehouses([newValue]);
           handleClear();
-          Message("success", "Add new customer success");
+          Message("success", "Add new warehouse success");
         } else {
           Message("error", "Please fill in required fields");
         }
@@ -190,12 +154,12 @@ const Customer = () => {
           (error.response ? error.response.data : error.message)
       );
     }
-  }, [customer, customers]);
+  }, [warehouse, warehouses]);
 
   const handleDelete = useCallback(
     async (id) => {
       try {
-        await customersService.destroy(id);
+        await warehouseService.destroy(id);
         Message("success", "Delete success");
         handleQuery();
       } catch (error) {
@@ -206,17 +170,17 @@ const Customer = () => {
         );
       }
     },
-    [customers]
+    [warehouses]
   );
 
   const handleClear = () => {
-    setCustomer(initialCustomerState);
+    setWarehouse(initialState);
     form.resetFields();
   };
 
   useEffect(() => {
-    form.setFieldsValue(customer);
-  }, [customer, form]);
+    form.setFieldsValue(warehouse);
+  }, [warehouse, form]);
   return (
     <div>
       <Content
@@ -267,57 +231,19 @@ const Customer = () => {
               name="name"
               onChange={handleInputFormChange}
               type="text"
-              value={customer.name}
+              value={warehouse.name}
               placeholder="Enter Name"
             />
           </Form.Item>
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input name",
-              },
-            ]}
-            name="phone"
-            label="Phone"
-            className="py-2"
-          >
-            <Input
-              name="phone"
-              onChange={handleInputFormChange}
-              value={customer.phone}
-              placeholder="Enter Phone"
-            />
-          </Form.Item>
 
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input name",
-              },
-            ]}
-            name="fax"
-            label="Fax"
-            className="py-2"
-          >
+          <Form.Item name="description" label="Description" className="py-2">
             <Input
-              name="fax"
-              onChange={handleInputFormChange}
-              type="number"
-              value={customer.fax}
-              placeholder="Enter Fax"
-            />
-          </Form.Item>
-
-          <Form.Item name="address" label="Address" className="py-2">
-            <Input
-              name="address"
+              name="description"
               onChange={handleInputFormChange}
               type="text"
-              value={customer.address}
+              value={warehouse.description}
               style={{ width: 350 }}
-              placeholder="Enter Address"
+              placeholder="Enter Description"
             />
           </Form.Item>
         </Form>
@@ -337,13 +263,13 @@ const Customer = () => {
           pagination={{
             current: currentPage,
             pageSize: 5,
-            total: customers.length,
+            total: warehouses.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={customers}
+          dataSource={warehouses}
         />
       </Content>
 
@@ -352,4 +278,4 @@ const Customer = () => {
   );
 };
 
-export default Customer;
+export default Warehouse;
