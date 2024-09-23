@@ -18,6 +18,8 @@ export const destroy = async (id) => {
 };
 
 export const update = async (id, data) => {
+  console.log(1);
+
   const response = await Update(endpoint + id, data);
   return response;
 };

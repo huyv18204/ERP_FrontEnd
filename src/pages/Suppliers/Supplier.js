@@ -44,14 +44,14 @@ const Supplier = () => {
       title: "No.",
       dataIndex: "code",
       key: "code",
-      width: "10%",
+      width: "15%",
       ...getColumnSearch("code"),
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: "16%",
+      width: "20%",
       ...getColumnSearch("name"),
       render: (value, record) => (
         <Input
@@ -67,7 +67,7 @@ const Supplier = () => {
       title: "Phone",
       dataIndex: "phone",
       key: "phone",
-      width: "15%",
+      width: "20%",
       ...getColumnSearch("phone"),
       render: (value, record) => (
         <Input
@@ -295,9 +295,10 @@ const Supplier = () => {
         }}
       >
         <Table
+          size="small"
           pagination={{
             current: currentPage,
-            pageSize: 5,
+            pageSize: 7,
             total: suppliers.length,
             onChange: (page) => {
               setCurrentPage(page);

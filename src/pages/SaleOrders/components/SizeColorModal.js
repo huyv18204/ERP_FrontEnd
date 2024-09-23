@@ -14,6 +14,7 @@ import BtnDelete from "../../../components/Button/BtnDelete";
 const SizeColorModal = () => {
   const [productItems, setProductItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [originalProductItems, setOriginalProductItems] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [colors, setColors] = useState([]);
   const { Message, contextHolder } = useMessage();
@@ -32,6 +33,9 @@ const SizeColorModal = () => {
         const response = await productItemService.show(saleOrderItemId);
         if (response.data.data.length > 0) {
           setProductItems(response.data.data);
+          setOriginalProductItems(
+            JSON.parse(JSON.stringify(response.data.data))
+          );
         } else {
           setProductItems([]);
         }
@@ -62,22 +66,65 @@ const SizeColorModal = () => {
     handleCloseModal();
   };
 
+  // const handleSave = async () => {
+  //   const dataSave = productItems.filter((item) => item.id === undefined);
+  //   const dataUpdate = productItems.filter((item) => item.id !== undefined);
+
+  //   if (
+  //     dataSave.length > 0 &&
+  //     dataSave[0].size_id &&
+  //     dataSave[0].color_id &&
+  //     dataSave[0].quantity
+  //   ) {
+  //     try {
+  //       const response = await productItemService.store({
+  //         size_color_quantity: dataSave,
+  //         sale_order_item_id: saleOrderItem[0].id,
+  //       });
+  //       getProductItem();
+  //       Message(response.type, response.message);
+  //     } catch (error) {
+  //       Message("error", "Error saving new items: " + error.message);
+  //     }
+  //   }
+
+  //   if (dataUpdate.length > 0) {
+  //     const hasInvalidItemsUpdate = dataUpdate.some(
+  //       (item) => !item.color_id || !item.size_id || !item.quantity
+  //     );
+
+  //     if (hasInvalidItemsUpdate) {
+  //       Message("error", "Please fill in required fields for existing items");
+  //       return;
+  //     }
+
+  //     try {
+  //       await Promise.all(
+  //         dataUpdate.map((item) =>
+  //           productItemService.update(item.id, {
+  //             size_id: item.size_id,
+  //             color_id: item.color_id,
+  //             quantity: item.quantity,
+  //             description: item.description,
+  //           })
+  //         )
+  //       );
+  //       Message("success", "Items updated successfully");
+  //     } catch (error) {
+  //       Message("error", "Error updating items: " + error.message);
+  //     }
+  //   }
+  // };
   const handleSave = async () => {
     const dataSave = productItems.filter((item) => item.id === undefined);
     const dataUpdate = productItems.filter((item) => item.id !== undefined);
 
-    if (
-      dataSave.length > 0 &&
-      dataSave[0].size_id &&
-      dataSave[0].color_id &&
-      dataSave[0].quantity
-    ) {
+    if (dataSave.length > 0) {
       try {
         const response = await productItemService.store({
           size_color_quantity: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
-        getProductItem();
         Message(response.type, response.message);
       } catch (error) {
         Message("error", "Error saving new items: " + error.message);
@@ -85,31 +132,38 @@ const SizeColorModal = () => {
     }
 
     if (dataUpdate.length > 0) {
-      const hasInvalidItemsUpdate = dataUpdate.some(
-        (item) => !item.color_id || !item.size_id || !item.quantity
-      );
-
-      if (hasInvalidItemsUpdate) {
-        Message("error", "Please fill in required fields for existing items");
-        return;
-      }
-
-      try {
-        await Promise.all(
-          dataUpdate.map((item) =>
-            productItemService.update(item.id, {
-              size_id: item.size_id,
-              color_id: item.color_id,
-              quantity: item.quantity,
-              description: item.description,
-            })
-          )
+      const modifiedRecords = dataUpdate.filter((item) => {
+        const originalItem = originalProductItems.find(
+          (original) => original.id === item.id
         );
-        Message("success", "Items updated successfully");
-      } catch (error) {
-        Message("error", "Error updating items: " + error.message);
+        return (
+          originalItem &&
+          (originalItem.size_id !== item.size_id ||
+            originalItem.color_id !== item.color_id ||
+            originalItem.quantity !== item.quantity ||
+            originalItem.description !== item.description)
+        );
+      });
+
+      if (modifiedRecords.length > 0) {
+        try {
+          await Promise.all(
+            modifiedRecords.map((item) =>
+              productItemService.update(item.id, {
+                size_id: item.size_id,
+                color_id: item.color_id,
+                quantity: item.quantity,
+                description: item.description,
+              })
+            )
+          );
+          Message("success", "Items updated successfully");
+        } catch (error) {
+          Message("error", "Error updating items: " + error.message);
+        }
       }
     }
+    getProductItem(saleOrderItem[0].id);
   };
 
   const handleInputTableChange = (e, key, column) => {
@@ -339,9 +393,10 @@ const SizeColorModal = () => {
           }}
         >
           <Table
+            size="small"
             pagination={{
               current: currentPage,
-              pageSize: 3,
+              pageSize: 5,
               total: productItems.length,
               onChange: (page) => {
                 setCurrentPage(page);

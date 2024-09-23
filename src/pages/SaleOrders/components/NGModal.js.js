@@ -13,6 +13,7 @@ import BtnDelete from "../../../components/Button/BtnDelete";
 const NGModal = () => {
   const [productNG, setProductNG] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [originalProductNGs, setOriginalProductNGs] = useState([]);
   const [NG, setNG] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { Content } = Layout;
@@ -31,6 +32,7 @@ const NGModal = () => {
         const response = await productNGService.show(saleOrderItemId);
         if (response.data.data.length > 0) {
           setProductNG(response.data.data);
+          setOriginalProductNGs(JSON.parse(JSON.stringify(response.data.data)));
         } else {
           setProductNG([]);
         }
@@ -69,7 +71,6 @@ const NGModal = () => {
           product_ng: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
-        getProductNG();
         Message(response.type, response.message);
       } catch (error) {
         Message("error", "Error saving new items: " + error.message);
@@ -77,27 +78,34 @@ const NGModal = () => {
     }
 
     if (dataUpdate.length > 0) {
-      const hasInvalidItemsUpdate = dataUpdate.some((item) => !item.ng_type_id);
-
-      if (hasInvalidItemsUpdate) {
-        Message("error", "Please fill in required fields for existing items");
-        return;
-      }
-
-      try {
-        await Promise.all(
-          dataUpdate.map((item) =>
-            productNGService.update(item.id, {
-              ng_type_id: item.ng_type_id,
-              description: item.description,
-            })
-          )
+      const modifiedRecords = dataUpdate.filter((item) => {
+        const originalItem = originalProductNGs.find(
+          (original) => original.id === item.id
         );
-        Message("success", "Items updated successfully");
-      } catch (error) {
-        Message("error", "Error updating items: " + error.message);
+        return (
+          originalItem &&
+          (originalItem.ng_type_id !== item.ng_type_id ||
+            originalItem.description !== item.description)
+        );
+      });
+
+      if (modifiedRecords.length > 0) {
+        try {
+          await Promise.all(
+            dataUpdate.map((item) =>
+              productNGService.update(item.id, {
+                ng_type_id: item.ng_type_id,
+                description: item.description,
+              })
+            )
+          );
+          Message("success", "Items updated successfully");
+        } catch (error) {
+          Message("error", "Error updating items: " + error.message);
+        }
       }
     }
+    getProductNG(saleOrderItem[0]?.id);
   };
 
   const handleInputTableChange = (e, key, column) => {
@@ -272,9 +280,10 @@ const NGModal = () => {
           }}
         >
           <Table
+            size="small"
             pagination={{
               current: currentPage,
-              pageSize: 3,
+              pageSize: 5,
               total: productNG.length,
               onChange: (page) => {
                 setCurrentPage(page);

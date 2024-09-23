@@ -15,6 +15,10 @@ import SaleOrderRegister from "../pages/SaleOrders/SaleOrderRegister";
 import Supplier from "../pages/Suppliers/Supplier";
 import Warehouse from "../pages/Warehouses/Warehouse";
 import Product from "../pages/Products/Product";
+import BOMRegister from "../pages/BOMs/BOMRegister";
+import WarehouseEntryRegister from "../pages/WarehouseEntries/WarehouseEntryRegister";
+import WarehouseImport from "../pages/WarehouseEntries/WarehousrImport";
+import WarehouseEntryList from "../pages/WarehouseEntries/WarehouseEntryList";
 
 const RouterComponent = () => {
   return (
@@ -43,6 +47,13 @@ const RouterComponent = () => {
             <Route path="suppliers" element={<Supplier />} />
             <Route path="warehouses" element={<Warehouse />} />
             <Route path="products" element={<Product />} />
+            <Route path="boms/register" element={<BOMRegister />} />
+            <Route path="warehouses/import" element={<WarehouseImport />} />
+            <Route
+              path="warehouse-entries/create"
+              element={<WarehouseEntryRegister />}
+            />
+            <Route path="warehouse-entries" element={<WarehouseEntryList />} />
             {/* <Route path="*" element={<Page404 />} />  */}
           </Route>
         </Routes>

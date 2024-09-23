@@ -3,7 +3,8 @@ import { Layout, theme, Table } from "antd";
 import { useDispatch } from "react-redux";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
-import * as employeeService from "../../services/sale_orders";
+import * as saleOrdersService from "../../services/sale_orders";
+import * as saleOrderItemsService from "../../services/sale_order_items";
 import * as customerService from "../../services/customers";
 import * as productsService from "../../services/products";
 import { useMessage } from "../../hooks/useMessage";
@@ -38,8 +39,6 @@ const SaleOrderRegister = () => {
   };
   const initialSaleOrderState = {
     customer_id: null,
-    order_date: "",
-    saleOrderItem: [],
   };
 
   const initialSaleOrderItemState = [
@@ -49,17 +48,12 @@ const SaleOrderRegister = () => {
       delivery_date: "",
       description: "",
     },
-    {
-      key: 2,
-      product_id: null,
-      delivery_date: "",
-      description: "",
-    },
   ];
 
   const [saleOrder, setSaleOrder] = useState(initialSaleOrderState);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSaved, setIsSaved] = useState(false);
+  const [originalProductItems, setOriginalProductItems] = useState([]);
   const [saleOrderItems, setSaleOrderItems] = useState(
     initialSaleOrderItemState
   );
@@ -84,6 +78,24 @@ const SaleOrderRegister = () => {
     if (index !== -1) {
       newSaleOrders[index][column] = value;
       setSaleOrderItems(newSaleOrders);
+    }
+  };
+
+  const getSaleOrderItem = async (saleOrderId) => {
+    if (saleOrderId) {
+      try {
+        const response = await saleOrderItemsService.show(saleOrderId);
+        if (response.data.data.length > 0) {
+          setSaleOrderItems(response.data.data);
+          setOriginalProductItems(
+            JSON.parse(JSON.stringify(response.data.data))
+          );
+        } else {
+          setSaleOrderItems([]);
+        }
+      } catch (error) {
+        Message("error", "Error fetching product items: " + error.message);
+      }
     }
   };
 
@@ -121,8 +133,6 @@ const SaleOrderRegister = () => {
       ...getColumnSearch("delivery_date"),
       render: (value, record) => (
         <Input
-          className={isSaved ? "no-border" : ""}
-          readOnly={isSaved}
           name={`delivery_date[${record.key}]`}
           type="date"
           value={value}
@@ -140,8 +150,6 @@ const SaleOrderRegister = () => {
       ...getColumnSearch("description"),
       render: (value, record) => (
         <Input
-          className={isSaved ? "no-border" : ""}
-          readOnly={isSaved}
           name={`description[${record.key}]`}
           type="text"
           value={value}
@@ -194,7 +202,7 @@ const SaleOrderRegister = () => {
       className: "text-center",
       fixed: "right",
       render: (_, record) => (
-        <BtnDelete disabled={isSaved} event={() => handleDelete(record.key)} />
+        <BtnDelete event={() => handleDelete(record.id, record.key)} />
       ),
     },
   ];
@@ -202,14 +210,6 @@ const SaleOrderRegister = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-
-  const handleInputFormChange = (e) => {
-    const { name, value } = e.target;
-    setSaleOrder((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
   const handleOptionFormChange = (value) => {
     setSaleOrder((prev) => ({
@@ -219,39 +219,94 @@ const SaleOrderRegister = () => {
   };
 
   const handleSave = useCallback(async () => {
-    try {
-      if (
-        saleOrder &&
-        saleOrder.customer_id &&
-        saleOrder.order_date &&
-        saleOrderItems &&
-        saleOrderItems[0].product_id
-      ) {
-        const response = await employeeService.store({
-          ...saleOrder,
-          saleOrderItem: [...saleOrderItems],
-        });
-        console.log(response.data.sale_order_item);
-
-        setSaleOrderItems(response.data.sale_order_item);
-
-        setIsSaved(true);
-        Message(response.type, response.message);
-      } else {
-        Message("error", "Please fill in required fields");
+    const dataSave = saleOrderItems.filter((item) => item.id === undefined);
+    const dataUpdate = saleOrderItems.filter((item) => item.id !== undefined);
+    if (dataSave.length > 0) {
+      try {
+        if (
+          saleOrder &&
+          saleOrder.customer_id &&
+          dataSave &&
+          dataSave[0].product_id
+        ) {
+          if (!isSaved) {
+            const response = await saleOrdersService.store({
+              ...saleOrder,
+              saleOrderItem: [...dataSave],
+            });
+            getSaleOrderItem(response.data.sale_order.id);
+            setSaleOrder(response.data.sale_order);
+            setIsSaved(true);
+            Message(response.type, response.message);
+          } else {
+            const response = await saleOrderItemsService.store({
+              ...saleOrder,
+              saleOrderItem: [...dataSave],
+            });
+            getSaleOrderItem(response.data.sale_order.id);
+            setSaleOrder(response.data.sale_order);
+            Message(response.type, response.message);
+          }
+        } else {
+          Message("error", "Please fill in required fields");
+        }
+      } catch (error) {
+        Message(
+          "error",
+          "Error saving data: " +
+            (error.response ? error.response.data : error.message)
+        );
       }
-    } catch (error) {
-      Message(
-        "error",
-        "Error saving data: " +
-          (error.response ? error.response.data : error.message)
-      );
+    }
+
+    if (dataUpdate.length > 0) {
+      const modifiedRecords = dataUpdate.filter((item) => {
+        const originalItem = originalProductItems.find(
+          (original) => original.id === item.id
+        );
+        return (
+          originalItem &&
+          (originalItem.product_id !== item.product_id ||
+            originalItem.delivery_date !== item.delivery_date ||
+            originalItem.description !== item.description)
+        );
+      });
+
+      if (modifiedRecords.length > 0) {
+        try {
+          await Promise.all(
+            modifiedRecords.map((item) =>
+              saleOrderItemsService.update(item.id, {
+                product_id: item.product_id,
+                delivery_date: item.delivery_date,
+                description: item.description,
+              })
+            )
+          );
+          getSaleOrderItem(saleOrder.id);
+          Message("success", "Items updated successfully");
+        } catch (error) {
+          Message("error", "Error updating items: " + error.message);
+        }
+      }
     }
   }, [saleOrder, saleOrderItems]);
 
-  const handleDelete = (key) => {
-    const updatedSaleOrders = saleOrderItems.filter((item) => item.key !== key);
-    setSaleOrderItems(updatedSaleOrders);
+  const handleDelete = async (id, key) => {
+    if (id) {
+      const response = await saleOrderItemsService.destroy(id);
+      const updatedSaleOrders = saleOrderItems.filter(
+        (item) => item.key !== key
+      );
+      setSaleOrderItems(updatedSaleOrders);
+      Message(response.type, response.message);
+    } else {
+      const updatedSaleOrders = saleOrderItems.filter(
+        (item) => item.key !== key
+      );
+      setSaleOrderItems(updatedSaleOrders);
+      Message("success", "Delete row successfully");
+    }
   };
 
   const handleNew = () => {
@@ -349,26 +404,6 @@ const SaleOrderRegister = () => {
                 </Option>
               ))}
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input customer",
-              },
-            ]}
-            name="order_date"
-            label="Order Date"
-            className="py-2"
-          >
-            <Input
-              readOnly={isSaved}
-              name="order_date"
-              onChange={handleInputFormChange}
-              type="date"
-              value={saleOrder.order_date}
-            />
           </Form.Item>
         </Form>
       </Content>

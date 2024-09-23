@@ -13,6 +13,7 @@ import BtnDelete from "../../../components/Button/BtnDelete";
 const SizeColorModal = () => {
   const [productProcess, setProductProcess] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [originalProductProcess, setOriginalProductProcess] = useState([]);
   const [process, setProcess] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { Content } = Layout;
@@ -31,6 +32,9 @@ const SizeColorModal = () => {
         const response = await productProcessService.show(saleOrderItemId);
         if (response.data.data.length > 0) {
           setProductProcess(response.data.data);
+          setOriginalProductProcess(
+            JSON.parse(JSON.stringify(response.data.data))
+          );
         } else {
           setProductProcess([]);
         }
@@ -63,17 +67,12 @@ const SizeColorModal = () => {
     const dataSave = productProcess.filter((item) => item.id === undefined);
     const dataUpdate = productProcess.filter((item) => item.id !== undefined);
 
-    if (
-      dataSave.length > 0 &&
-      dataSave[0].process_id &&
-      dataSave[0].std_workTime
-    ) {
+    if (dataSave.length > 0) {
       try {
         const response = await productProcessService.store({
           product_process: dataSave,
           sale_order_item_id: saleOrderItem[0].id,
         });
-        getProductProcess();
         Message(response.type, response.message);
       } catch (error) {
         Message("error", "Error saving new items: " + error.message);
@@ -81,30 +80,36 @@ const SizeColorModal = () => {
     }
 
     if (dataUpdate.length > 0) {
-      const hasInvalidItemsUpdate = dataUpdate.some(
-        (item) => !item.process_id || !item.std_workTime
-      );
-
-      if (hasInvalidItemsUpdate) {
-        Message("error", "Please fill in required fields for existing items");
-        return;
-      }
-
-      try {
-        await Promise.all(
-          dataUpdate.map((item) =>
-            productProcessService.update(item.id, {
-              process_id: item.process_id,
-              std_workTime: item.std_workTime,
-              description: item.description,
-            })
-          )
+      const modifiedRecords = dataUpdate.filter((item) => {
+        const originalItem = originalProductProcess.find(
+          (original) => original.id === item.id
         );
-        Message("success", "Items updated successfully");
-      } catch (error) {
-        Message("error", "Error updating items: " + error.message);
+        return (
+          originalItem &&
+          (originalItem.process_id !== item.process_id ||
+            originalItem.std_workTime !== item.std_workTime ||
+            originalItem.description !== item.description)
+        );
+      });
+
+      if (modifiedRecords.length > 0) {
+        try {
+          await Promise.all(
+            modifiedRecords.map((item) =>
+              productProcessService.update(item.id, {
+                process_id: item.process_id,
+                std_workTime: item.std_workTime,
+                description: item.description,
+              })
+            )
+          );
+          Message("success", "Items updated successfully");
+        } catch (error) {
+          Message("error", "Error updating items: " + error.message);
+        }
       }
     }
+    getProductProcess(saleOrderItem[0]?.id);
   };
 
   const handleInputTableChange = (e, key, column) => {
@@ -296,9 +301,10 @@ const SizeColorModal = () => {
           }}
         >
           <Table
+            size="small"
             pagination={{
               current: currentPage,
-              pageSize: 3,
+              pageSize: 5,
               total: productProcess.length,
               onChange: (page) => {
                 setCurrentPage(page);
