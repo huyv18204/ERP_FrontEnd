@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Layout, theme, Table } from "antd";
+import { Layout, theme, Table, Button } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select, Tag } from "antd";
+import { ImportOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import * as suppliersService from "../../services/suppliers";
 import * as WHEntriesService from "../../services/warehouse_entries";
 import { useMessage } from "../../hooks/useMessage";
@@ -10,7 +12,10 @@ import BtnDelete from "../../components/Button/BtnDelete";
 import BtnQuery from "../../components/Button/BtnQuery.js";
 import BtnEdit from "../../components/Button/BtnEdit.js";
 import { useDispatch } from "react-redux";
-import { jumpWHCreate } from "../../redux/actions/warehouseAction.js";
+import {
+  jumpWHCreate,
+  jumpWHImport,
+} from "../../redux/actions/warehouseAction.js";
 
 const WarehouseEntryList = () => {
   const initialSaleOrderState = {
@@ -141,7 +146,13 @@ const WarehouseEntryList = () => {
         <>
           {!record.status && (
             <div className="d-flex">
+              <Button onClick={() => handleJump(record)}>
+                <Link to="/erp-system/warehouses/import">
+                  <ImportOutlined />
+                </Link>
+              </Button>
               <BtnEdit
+                className="ms-2"
                 onClick={() => handleEdit(record)}
                 to="/erp-system/warehouse-entries/create"
               />
@@ -193,6 +204,19 @@ const WarehouseEntryList = () => {
     }));
 
     setWHEntries(dataWHEntry);
+  };
+
+  const handleJump = (record) => {
+    const WHEntryDetail = record.warehouse_entry_details.map((item) => ({
+      ...item,
+      key: item.id,
+    }));
+    dispatch(
+      jumpWHImport({
+        WHEntryDetail: WHEntryDetail,
+        supplier_id: record.supplier_id,
+      })
+    );
   };
 
   const handleEdit = (record) => {

@@ -34,6 +34,7 @@ const WarehouseEntryRegister = () => {
   const { Content } = Layout;
   const { Option } = Select;
   const [form] = Form.useForm();
+  console.log(isSaved);
 
   const warehouseEntry = useSelector((state) => state.warehouse.warehouseEntry);
   const warehouseEntryDetials = useSelector(
@@ -41,7 +42,7 @@ const WarehouseEntryRegister = () => {
   );
   const handleInputTableChange = (e, key, column) => {
     const newValues = [...WHEntryDetail];
-    const index = newValues.findIndex((item) => key === item.id);
+    const index = newValues.findIndex((item) => key === item.key);
     newValues[index][column] = e.target.value;
     setWHEntryDetail(newValues);
   };
@@ -74,7 +75,7 @@ const WarehouseEntryRegister = () => {
           name={`material_code[${record.key}]`}
           value={value}
           onChange={(e) =>
-            handleInputTableChange(e, record.id, "material_code")
+            handleInputTableChange(e, record.key, "material_code")
           }
         />
       ),
@@ -90,7 +91,7 @@ const WarehouseEntryRegister = () => {
         <Input
           name={`name[${record.key}]`}
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.id, "name")}
+          onChange={(e) => handleInputTableChange(e, record.key, "name")}
         />
       ),
     },
@@ -106,7 +107,7 @@ const WarehouseEntryRegister = () => {
           name={`unit_price[${record.key}]`}
           type="number"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.id, "unit_price")}
+          onChange={(e) => handleInputTableChange(e, record.key, "unit_price")}
         />
       ),
     },
@@ -122,7 +123,7 @@ const WarehouseEntryRegister = () => {
           name={`quantity[${record.key}]`}
           type="number"
           value={value}
-          onChange={(e) => handleInputTableChange(e, record.id, "quantity")}
+          onChange={(e) => handleInputTableChange(e, record.key, "quantity")}
         />
       ),
     },
@@ -283,7 +284,7 @@ const WarehouseEntryRegister = () => {
   }, []);
 
   useEffect(() => {
-    if (warehouseEntry) {
+    if (warehouseEntry.length > 0) {
       setWHEntry({ ...warehouseEntry });
       form.setFieldsValue({ ...warehouseEntry });
       setIsSaved(true);

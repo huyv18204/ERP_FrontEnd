@@ -12,9 +12,12 @@ import Process from "../pages/Processes/Process";
 import NG from "../pages/NGs/NG";
 import SaleOrderList from "../pages/SaleOrders/SaleOrderList";
 import SaleOrderRegister from "../pages/SaleOrders/SaleOrderRegister";
+import ProductionOrderRegister from "../pages/ProductionOrders/ProductionOrderRegister";
 import Supplier from "../pages/Suppliers/Supplier";
 import Warehouse from "../pages/Warehouses/Warehouse";
 import Product from "../pages/Products/Product";
+import StockMaterial from "../pages/Stocks/StockMaterial";
+import StockProduct from "../pages/Stocks/StockProduct";
 import BOMRegister from "../pages/BOMs/BOMRegister";
 import WarehouseEntryRegister from "../pages/WarehouseEntries/WarehouseEntryRegister";
 import WarehouseImport from "../pages/WarehouseEntries/WarehousrImport";
@@ -54,6 +57,12 @@ const RouterComponent = () => {
               element={<WarehouseEntryRegister />}
             />
             <Route path="warehouse-entries" element={<WarehouseEntryList />} />
+            <Route
+              path="production-orders/register"
+              element={<ProductionOrderRegister />}
+            />
+            <Route path="stock-materials" element={<StockMaterial />} />
+            <Route path="stock-products" element={<StockProduct />} />
             {/* <Route path="*" element={<Page404 />} />  */}
           </Route>
         </Routes>

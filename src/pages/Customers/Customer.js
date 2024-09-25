@@ -47,7 +47,7 @@ const Customer = () => {
       title: "No.",
       dataIndex: "customer_code",
       key: "customer_code",
-      width: "10%",
+      width: "15%",
       ...getColumnSearch("customer_code"),
       fixed: "left",
     },
@@ -55,7 +55,7 @@ const Customer = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: "16%",
+      width: "20%",
       ...getColumnSearch("name"),
       render: (value, record) => (
         <Input
@@ -71,7 +71,7 @@ const Customer = () => {
       title: "Phone",
       dataIndex: "phone",
       key: "phone",
-      width: "15%",
+      width: "16%",
       ...getColumnSearch("phone"),
       render: (value, record) => (
         <Input
@@ -145,7 +145,7 @@ const Customer = () => {
       const response = await customersService.index(customer);
       const data = response?.map((customer, index) => ({
         ...customer,
-        key: index,
+        key: customer.id,
       }));
       setCustomers(data);
     } catch (error) {
@@ -334,9 +334,10 @@ const Customer = () => {
         }}
       >
         <Table
+          size="small"
           pagination={{
             current: currentPage,
-            pageSize: 5,
+            pageSize: 8,
             total: customers.length,
             onChange: (page) => {
               setCurrentPage(page);

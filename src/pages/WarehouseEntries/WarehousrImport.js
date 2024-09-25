@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
-import { Form, Select } from "antd";
-import * as stocksService from "../../services/stocks";
-import * as warehousesService from "../../services/warehouses";
+import * as stockMaterialsService from "../../services/stock_materials";
 import { useMessage } from "../../hooks/useMessage";
 import BtnImport from "../../components/Button/BtnImport";
 import BtnJump from "../../components/Button/BtnJump";
@@ -11,18 +9,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearWHImport } from "../../redux/actions/warehouseAction";
 
 const WarehouseImport = () => {
-  const initialWHState = {
-    warehouse_id: "",
-  };
-
-  const [WHEntry, setWHEntry] = useState(initialWHState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [warehouses, setSuppliers] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
-  const { Option } = Select;
-  const [form] = Form.useForm();
   const dispatch = useDispatch();
   const [warehouseImport, setWarehouseImport] = useState(
     useSelector((state) => state.warehouse.warehouseImport)
@@ -66,29 +56,18 @@ const WarehouseImport = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const handleOptionFormChange = (value) => {
-    setWHEntry((prev) => ({
-      ...prev,
-      warehouse_id: value,
-    }));
-  };
-
   const handleSave = useCallback(async () => {
     try {
       if (
-        WHEntry &&
-        WHEntry.warehouse_id &&
         warehouseImport &&
         warehouseImport[0].material_code &&
         warehouseImport[0].quantity &&
         warehouseImport[0].unit_price
       ) {
-        const response = await stocksService.store({
-          ...WHEntry,
+        const response = await stockMaterialsService.store({
           warehouseEntryDetail: warehouseImport,
           supplier_id: supplier_id,
         });
-        setWHEntry(initialWHState);
         setWarehouseImport([]);
         dispatch(clearWHImport());
         Message(response.type, response.message);
@@ -102,24 +81,12 @@ const WarehouseImport = () => {
           (error.response ? error.response.data : error.message)
       );
     }
-  }, [WHEntry]);
+  }, []);
 
   const handleJump = () => {
     dispatch(clearWHImport());
   };
 
-  const getWarehousrs = async () => {
-    const data = await warehousesService.index();
-    setSuppliers(data);
-  };
-
-  useEffect(() => {
-    getWarehousrs();
-  }, []);
-
-  useEffect(() => {
-    form.setFieldsValue(WHEntry);
-  }, [WHEntry, form]);
   return (
     <div>
       <Content
@@ -139,52 +106,6 @@ const WarehouseImport = () => {
           title="Warehouse Entry List"
           to="/erp-system/warehouse-entries"
         />
-      </Content>
-
-      <Content
-        style={{
-          margin: "10px 16px",
-          padding: 24,
-          paddingTop: 15,
-          paddingBottom: 15,
-          minHeight: 100,
-          background: colorBgContainer,
-          borderRadius: borderRadiusLG,
-        }}
-      >
-        <Form
-          layout="inline"
-          form={form}
-          style={{
-            maxWidth: "none",
-          }}
-        >
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input supplier",
-              },
-            ]}
-            name="warehouse_id"
-            label="Warehouse"
-            className="py-2"
-          >
-            <Select
-              style={{ width: 180 }}
-              name="warehouse_id"
-              placeholder="Select a Warehouse"
-              onChange={handleOptionFormChange}
-              allowClear
-            >
-              {warehouses.map((item) => (
-                <Option key={item.id} value={item.id}>
-                  {item.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
       </Content>
 
       <Content

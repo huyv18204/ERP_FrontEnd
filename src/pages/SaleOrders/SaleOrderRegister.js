@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
 import * as saleOrdersService from "../../services/sale_orders";
@@ -51,12 +51,14 @@ const SaleOrderRegister = () => {
   ];
 
   const [saleOrder, setSaleOrder] = useState(initialSaleOrderState);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isSaved, setIsSaved] = useState(false);
-  const [originalProductItems, setOriginalProductItems] = useState([]);
   const [saleOrderItems, setSaleOrderItems] = useState(
     initialSaleOrderItemState
   );
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isSaved, setIsSaved] = useState(false);
+  const [originalProductItems, setOriginalProductItems] = useState([]);
+
   const [customers, setCustomers] = useState([]);
   const [product, setProduct] = useState([]);
   const { Message, contextHolder } = useMessage();
@@ -64,6 +66,24 @@ const SaleOrderRegister = () => {
   const { Content } = Layout;
   const { Option } = Select;
   const [form] = Form.useForm();
+  const saleOrderJump = useSelector((state) => state.saleOrder.saleOrder);
+  const saleOrderItemsJump = useSelector(
+    (state) => state.saleOrder.saleOrderItems
+  );
+
+  useEffect(() => {
+    if (saleOrderJump && saleOrderJump.customer_id) {
+      setSaleOrder({ ...saleOrderJump });
+      form.setFieldsValue({ ...saleOrderJump });
+      setIsSaved(true);
+      if (saleOrderItemsJump) {
+        setSaleOrderItems([...saleOrderItemsJump]);
+        setOriginalProductItems(
+          JSON.parse(JSON.stringify([...saleOrderItemsJump]))
+        );
+      }
+    }
+  }, [saleOrderJump, saleOrderItemsJump, form]);
 
   const handleInputTableChange = (e, key, column) => {
     const newSaleOrders = [...saleOrderItems];
@@ -108,6 +128,7 @@ const SaleOrderRegister = () => {
       ...getColumnSearch("product_id"),
       render: (value, record) => (
         <Select
+          disabled={record.id !== undefined ? true : false}
           name={`product_id[${record.key}]`}
           placeholder="Select a product"
           onChange={(newValue) =>
@@ -115,7 +136,7 @@ const SaleOrderRegister = () => {
           }
           allowClear
           value={record.product_id}
-          style={{ minWidth: 130 }}
+          style={{ width: 150 }}
         >
           {product.map((item) => (
             <Option key={item.id} value={item.id}>

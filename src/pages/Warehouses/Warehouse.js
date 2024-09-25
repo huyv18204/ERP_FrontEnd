@@ -10,6 +10,7 @@ import BtnSave from "../../components/Button/BtnSave";
 import BtnDelete from "../../components/Button/BtnDelete";
 const Warehouse = () => {
   const initialState = {
+    code: "",
     name: "",
     description: "",
   };
@@ -45,6 +46,15 @@ const Warehouse = () => {
       key: "code",
       width: "20%",
       ...getColumnSearch("code"),
+      render: (value, record) => (
+        <Input
+          className="input-no-border"
+          name={`code[${record.key}]`}
+          type="text"
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "code")}
+        />
+      ),
     },
     {
       title: "Name",
@@ -220,6 +230,25 @@ const Warehouse = () => {
             rules={[
               {
                 required: true,
+                message: "Please input code",
+              },
+            ]}
+            name="code"
+            label="No."
+            className="py-2"
+          >
+            <Input
+              name="code"
+              onChange={handleInputFormChange}
+              type="text"
+              value={warehouse.code}
+              placeholder="Enter Code"
+            />
+          </Form.Item>
+          <Form.Item
+            rules={[
+              {
+                required: true,
                 message: "Please input name",
               },
             ]}
@@ -260,9 +289,10 @@ const Warehouse = () => {
         }}
       >
         <Table
+          size="small"
           pagination={{
             current: currentPage,
-            pageSize: 5,
+            pageSize: 8,
             total: warehouses.length,
             onChange: (page) => {
               setCurrentPage(page);

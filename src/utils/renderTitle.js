@@ -41,6 +41,12 @@ const RenderTitle = () => {
       return <span className="ms-3">Warehouse Entry List</span>;
     case "/erp-system/warehouses/import":
       return <span className="ms-3">Warehouse Import</span>;
+    case "/erp-system/stock-materials":
+      return <span className="ms-3">Stock Material</span>;
+    case "/erp-system/stock-products":
+      return <span className="ms-3">Stock Product</span>;
+    case "/erp-system/production-orders/register":
+      return <span className="ms-3">Production Order Register</span>;
     default:
       return <>Dashboard</>;
   }

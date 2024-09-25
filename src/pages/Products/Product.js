@@ -51,7 +51,7 @@ const Product = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      width: "20%",
+      width: "25%",
       ...getColumnSearch("name"),
       render: (value, record) => (
         <Input
@@ -67,7 +67,7 @@ const Product = () => {
       title: "Unit Price",
       dataIndex: "unit_price",
       key: "unit_price",
-      width: "20%",
+      width: "15%",
       ...getColumnSearch("unit_price"),
       render: (value, record) => (
         <Input
@@ -295,6 +295,7 @@ const Product = () => {
         }}
       >
         <Table
+          size="small"
           pagination={{
             current: currentPage,
             pageSize: 5,

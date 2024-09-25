@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, theme, Table, Tag } from "antd";
+import { Layout, theme, Table } from "antd";
 import { useDispatch } from "react-redux";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
@@ -18,16 +18,12 @@ import SizeColorModal from "./components/SizeColorModal";
 import ProcessModal from "./components/ProcessModal";
 import NGModal from "./components/NGModal.js";
 import BtnQuery from "../../components/Button/BtnQuery.js";
-import BtnEdit from "../../components/Button/BtnEdit.js";
-import { jumpRegister } from "../../redux/actions/saleOrderAction.js";
-import BtnCheckOut from "../../components/Button/BtnCheckOut.js";
 
 const SaleOrderList = () => {
   const initialSaleOrderState = {
     customer_id: null,
     start_order_date: "",
     end_order_date: "",
-    code: "",
   };
   const [saleOrder, setSaleOrder] = useState(initialSaleOrderState);
   const [saleOrders, setSaleOrders] = useState([]);
@@ -69,10 +65,18 @@ const SaleOrderList = () => {
   const expandedRowRender = (record) => {
     const columns = [
       {
+        title: "No.",
+        dataIndex: "code",
+        key: "code",
+        width: "8%",
+        ...getColumnSearch("code"),
+        fixed: "left",
+      },
+      {
         title: "Product",
         dataIndex: "product_name",
         key: "product_name",
-        width: "15%",
+        width: "10%",
         ...getColumnSearch("product_name"),
       },
       {
@@ -82,19 +86,19 @@ const SaleOrderList = () => {
         width: "10%",
         ...getColumnSearch("unit_price"),
       },
-      {
-        title: "Total Amount",
-        dataIndex: "total_amount",
-        key: "total_amount",
-        width: "10%",
-      },
+      // {
+      //   title: "Total",
+      //   dataIndex: "total",
+      //   key: "total",
+      //   width: "10%",
+      // },
 
-      {
-        title: "Total Price",
-        dataIndex: "total_price",
-        key: "total_price",
-        width: "10%",
-      },
+      // {
+      //   title: "Price",
+      //   dataIndex: "price",
+      //   key: "price",
+      //   width: "10%",
+      // },
 
       {
         title: "Delivery Date",
@@ -152,6 +156,15 @@ const SaleOrderList = () => {
         dataSource={record.sale_order_items.map((item) => ({
           key: item.id,
           product_name: item.product.name,
+          unit_price: item.product.unit_price,
+          // total:
+          //   item.product_items && item.product_items.length > 0
+          //     ? item.product_items[0].total
+          //     : 0,
+          // price:
+          //   (item.product_items && item.product_items.length > 0
+          //     ? +item.product_items[0].total
+          //     : 0) * item.unit_price,
           ...item,
         }))}
         pagination={false}
@@ -163,7 +176,7 @@ const SaleOrderList = () => {
       title: "No.",
       dataIndex: "code",
       key: "code",
-      width: "10%",
+      width: "20%",
       ...getColumnSearch("code"),
       fixed: "left",
     },
@@ -183,25 +196,10 @@ const SaleOrderList = () => {
     },
 
     {
-      title: "Total Amount",
-      dataIndex: "total_amount",
-      key: "total_amount",
-      width: "15%",
-    },
-
-    {
-      title: "Total Price",
-      dataIndex: "total_price",
-      key: "total_price",
-      width: "15%",
-    },
-
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: "2 0%",
-      render: (_, record) => <Tag color="success">{_}</Tag>,
+      title: "Total Quantity",
+      dataIndex: "total_quantity",
+      key: "total_quantity",
+      width: "20%",
     },
 
     {
@@ -210,36 +208,10 @@ const SaleOrderList = () => {
       width: "15%",
       className: "text-center",
       render: (_, record) => (
-        <div className="d-flex justify-content-center">
-          {record.status === "Pending" && (
-            <>
-              <BtnCheckOut
-                className="ms-2"
-                event={() => handleUpdateStatus(record.id)}
-              />
-              <BtnEdit
-                to="/erp-system/sale-orders/register"
-                className="ms-2"
-                onClick={() => handleJumpRegister(record)}
-              />
-            </>
-          )}
-          <BtnDelete className="ms-2" event={() => handleDelete(record.id)} />
-        </div>
+        <BtnDelete event={() => handleDelete(record.id)} />
       ),
     },
   ];
-
-  const handleUpdateStatus = async (id) => {
-    const response = await saleOrderService.updateStatus(id, {
-      status: "Pending Production",
-    });
-    console.log(response);
-  };
-
-  const handleJumpRegister = (record) => {
-    dispatch(jumpRegister(record));
-  };
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
@@ -327,14 +299,6 @@ const SaleOrderList = () => {
             maxWidth: "none",
           }}
         >
-          <Form.Item name="code" label="No." className="py-2">
-            <Input
-              name="code"
-              onChange={handleInputFormChange}
-              type="text"
-              value={saleOrder.code}
-            />
-          </Form.Item>
           <Form.Item name="customer" label="Customer" className="py-2">
             <Select
               style={{ width: 180 }}

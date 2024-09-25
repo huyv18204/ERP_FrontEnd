@@ -66,55 +66,6 @@ const SizeColorModal = () => {
     handleCloseModal();
   };
 
-  // const handleSave = async () => {
-  //   const dataSave = productItems.filter((item) => item.id === undefined);
-  //   const dataUpdate = productItems.filter((item) => item.id !== undefined);
-
-  //   if (
-  //     dataSave.length > 0 &&
-  //     dataSave[0].size_id &&
-  //     dataSave[0].color_id &&
-  //     dataSave[0].quantity
-  //   ) {
-  //     try {
-  //       const response = await productItemService.store({
-  //         size_color_quantity: dataSave,
-  //         sale_order_item_id: saleOrderItem[0].id,
-  //       });
-  //       getProductItem();
-  //       Message(response.type, response.message);
-  //     } catch (error) {
-  //       Message("error", "Error saving new items: " + error.message);
-  //     }
-  //   }
-
-  //   if (dataUpdate.length > 0) {
-  //     const hasInvalidItemsUpdate = dataUpdate.some(
-  //       (item) => !item.color_id || !item.size_id || !item.quantity
-  //     );
-
-  //     if (hasInvalidItemsUpdate) {
-  //       Message("error", "Please fill in required fields for existing items");
-  //       return;
-  //     }
-
-  //     try {
-  //       await Promise.all(
-  //         dataUpdate.map((item) =>
-  //           productItemService.update(item.id, {
-  //             size_id: item.size_id,
-  //             color_id: item.color_id,
-  //             quantity: item.quantity,
-  //             description: item.description,
-  //           })
-  //         )
-  //       );
-  //       Message("success", "Items updated successfully");
-  //     } catch (error) {
-  //       Message("error", "Error updating items: " + error.message);
-  //     }
-  //   }
-  // };
   const handleSave = async () => {
     const dataSave = productItems.filter((item) => item.id === undefined);
     const dataUpdate = productItems.filter((item) => item.id !== undefined);
