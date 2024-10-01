@@ -1,6 +1,6 @@
 import { Create, Query, Delete, Update } from "./toolbar";
 
-const endpoint = "colors/";
+const endpoint = "production-orders/";
 
 export const index = async (params) => {
   const data = await Query(endpoint, params);

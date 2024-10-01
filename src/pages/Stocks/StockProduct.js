@@ -3,8 +3,6 @@ import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch.js";
 import { Form, Input, Select } from "antd";
 import * as productsService from "../../services/products.js";
-import * as colorsService from "../../services/colors.js";
-import * as sizesService from "../../services/sizes.js";
 import * as stockProductsService from "../../services/stock_products.js";
 import BtnClear from "../../components/Button/BtnClear.js";
 import BtnQuery from "../../components/Button/BtnQuery.js";
@@ -12,16 +10,12 @@ import BtnQuery from "../../components/Button/BtnQuery.js";
 const StockProduct = () => {
   const initialStockState = {
     product_id: null,
-    size_id: null,
-    color_id: null,
     code: "",
   };
   const [stock, setStock] = useState(initialStockState);
   const [stocks, setStocks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [products, setProducts] = useState([]);
-  const [colors, setColors] = useState([]);
-  const [sizes, setSizes] = useState([]);
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
   const { Option } = Select;
@@ -44,20 +38,6 @@ const StockProduct = () => {
       key: "product",
       width: "15%",
       ...getColumnSearch("product"),
-    },
-    {
-      title: "Color",
-      dataIndex: "color",
-      key: "color",
-      width: "15%",
-      ...getColumnSearch("color"),
-    },
-    {
-      title: "Size",
-      dataIndex: "size",
-      key: "size",
-      width: "15%",
-      ...getColumnSearch("size"),
     },
     {
       title: "Quantity",
@@ -95,10 +75,7 @@ const StockProduct = () => {
       product: stock.product.name,
       key: stock.id,
       code: stock.product.code,
-      color: stock.color.name,
-      size: stock.size.name,
     }));
-    console.log(dataWHEntry);
 
     setStocks(dataWHEntry);
   };
@@ -108,20 +85,8 @@ const StockProduct = () => {
     setProducts(data);
   };
 
-  const getColors = async () => {
-    const data = await colorsService.index();
-    setColors(data);
-  };
-
-  const getSizes = async () => {
-    const data = await sizesService.index();
-    setSizes(data);
-  };
-
   useEffect(() => {
     getProducts();
-    getColors();
-    getSizes();
   }, []);
 
   useEffect(() => {
@@ -178,38 +143,6 @@ const StockProduct = () => {
               allowClear
             >
               {products.map((item) => (
-                <Option key={item.id} value={item.id}>
-                  {item.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="color_id" label="Color" className="py-2">
-            <Select
-              style={{ width: 180 }}
-              name="color_id"
-              placeholder="Select a color"
-              onChange={(value) => handleOptionFormChange("color_id", value)} // Ghi chú
-              allowClear
-            >
-              {colors.map((item) => (
-                <Option key={item.id} value={item.id}>
-                  {item.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="size_id" label="Size" className="py-2">
-            <Select
-              style={{ width: 180 }}
-              name="size_id"
-              placeholder="Select a size"
-              onChange={(value) => handleOptionFormChange("size_id", value)} // Ghi chú
-              allowClear
-            >
-              {sizes.map((item) => (
                 <Option key={item.id} value={item.id}>
                   {item.name}
                 </Option>

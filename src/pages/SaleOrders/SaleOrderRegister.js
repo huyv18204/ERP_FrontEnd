@@ -14,20 +14,15 @@ import BtnDelete from "../../components/Button/BtnDelete";
 import BtnAddRow from "../../components/Button/BtnAddRow";
 import BtnModal from "../../components/Button/BtnModal";
 import {
-  openModalProductItem,
   openModalProductNG,
   openModalProductProcess,
 } from "../../redux/actions/modalAction";
-import SizeColorModal from "./components/SizeColorModal";
 import ProcessModal from "./components/ProcessModal";
 import NGModal from "./components/NGModal.js";
 
 const SaleOrderRegister = () => {
   const dispatch = useDispatch();
-  const handleShowModalProductItem = (key) => {
-    const dataFillter = saleOrderItems.filter((item) => item.key === key);
-    dispatch(openModalProductItem(dataFillter));
-  };
+
   const handleShowModalProcess = (key) => {
     const dataFillter = saleOrderItems.filter((item) => item.key === key);
     dispatch(openModalProductProcess(dataFillter));
@@ -47,6 +42,7 @@ const SaleOrderRegister = () => {
       product_id: null,
       delivery_date: "",
       description: "",
+      quantity: null,
     },
   ];
 
@@ -146,6 +142,7 @@ const SaleOrderRegister = () => {
         </Select>
       ),
     },
+
     {
       title: "Delivery Date",
       dataIndex: "delivery_date",
@@ -165,6 +162,22 @@ const SaleOrderRegister = () => {
     },
 
     {
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
+      width: "15%",
+      ...getColumnSearch("quantity"),
+      render: (value, record) => (
+        <Input
+          name={`quantity[${record.key}]`}
+          type="number"
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "quantity")}
+        />
+      ),
+    },
+
+    {
       title: "Description",
       dataIndex: "description",
       key: "description",
@@ -175,18 +188,6 @@ const SaleOrderRegister = () => {
           type="text"
           value={value}
           onChange={(e) => handleInputTableChange(e, record.key, "description")}
-        />
-      ),
-    },
-
-    {
-      className: "text-center",
-      title: "Quantity",
-      key: "product_item",
-      render: (value, record) => (
-        <BtnModal
-          disabled={isSaved === false}
-          event={() => handleShowModalProductItem(record.key)}
         />
       ),
     },
@@ -248,7 +249,9 @@ const SaleOrderRegister = () => {
           saleOrder &&
           saleOrder.customer_id &&
           dataSave &&
-          dataSave[0].product_id
+          dataSave[0].product_id &&
+          dataSave[0].quantity &&
+          dataSave[0].delivery_date
         ) {
           if (!isSaved) {
             const response = await saleOrdersService.store({
@@ -289,7 +292,8 @@ const SaleOrderRegister = () => {
           originalItem &&
           (originalItem.product_id !== item.product_id ||
             originalItem.delivery_date !== item.delivery_date ||
-            originalItem.description !== item.description)
+            originalItem.description !== item.description ||
+            originalItem.quantity !== item.quantity)
         );
       });
 
@@ -301,6 +305,7 @@ const SaleOrderRegister = () => {
                 product_id: item.product_id,
                 delivery_date: item.delivery_date,
                 description: item.description,
+                quantity: item.quantity,
               })
             )
           );
@@ -353,6 +358,7 @@ const SaleOrderRegister = () => {
       product_id: "",
       description: "",
       delivery_date: "",
+      quantity: null,
     };
 
     setSaleOrderItems([...saleOrderItems, newRow]);
@@ -458,7 +464,6 @@ const SaleOrderRegister = () => {
       {contextHolder}
 
       <ProcessModal />
-      <SizeColorModal />
       <NGModal />
     </div>
   );

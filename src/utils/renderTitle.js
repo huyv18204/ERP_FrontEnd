@@ -15,10 +15,6 @@ const RenderTitle = () => {
       return <span className="ms-3">Line Management</span>;
     case "/erp-system/factories":
       return <span className="ms-3">Factory Management</span>;
-    case "/erp-system/colors":
-      return <span className="ms-3">Color Management</span>;
-    case "/erp-system/sizes":
-      return <span className="ms-3">Size Management</span>;
     case "/erp-system/processes":
       return <span className="ms-3">Process Management</span>;
     case "/erp-system/ngs":
@@ -31,8 +27,6 @@ const RenderTitle = () => {
       return <span className="ms-3">Supplier Management</span>;
     case "/erp-system/products":
       return <span className="ms-3">Product Management</span>;
-    case "/erp-system/warehouses":
-      return <span className="ms-3">Warehouses Management</span>;
     case "/erp-system/bom/register":
       return <span className="ms-3">BOM Register</span>;
     case "/erp-system/warehouse-entries/create":
@@ -47,6 +41,16 @@ const RenderTitle = () => {
       return <span className="ms-3">Stock Product</span>;
     case "/erp-system/production-orders/register":
       return <span className="ms-3">Production Order Register</span>;
+    case "/erp-system/production-orders":
+      return <span className="ms-3">Production Order</span>;
+    case "/erp-system/purchase-requisitions":
+      return <span className="ms-3">Purchase Requisition</span>;
+    case "/erp-system/purchase-requisitions/register":
+      return <span className="ms-3">Purchase Requisition Register</span>;
+    case "/erp-system/purchase-orders/register":
+      return <span className="ms-3">Purchase Order Register</span>;
+    case "/erp-system/purchase-orders":
+      return <span className="ms-3">Purchase Order</span>;
     default:
       return <>Dashboard</>;
   }

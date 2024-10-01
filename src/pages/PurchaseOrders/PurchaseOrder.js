@@ -3,35 +3,27 @@ import { Layout, theme, Table, Tag } from "antd";
 import { useDispatch } from "react-redux";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
-import * as customerService from "../../services/customers";
-import * as saleOrderService from "../../services/sale_orders";
+import * as suppliersService from "../../services/suppliers";
+import * as POrdersService from "../../services/purchase_orders";
 import { useMessage } from "../../hooks/useMessage";
 import BtnClear from "../../components/Button/BtnClear";
-import BtnClose from "../../components/Button/BtnClose";
-import BtnModal from "../../components/Button/BtnModal";
-import {
-  openModalProductNG,
-  openModalProductProcess,
-} from "../../redux/actions/modalAction";
-import ProcessModal from "./components/ProcessModal";
-import NGModal from "./components/NGModal.js";
 import BtnQuery from "../../components/Button/BtnQuery.js";
-import BtnEdit from "../../components/Button/BtnEdit.js";
-import { jumpRegister } from "../../redux/actions/saleOrderAction.js";
 import { jumpPDORegister } from "../../redux/actions/productionOrderAction.js";
+import BtnCheckOut from "../../components/Button/BtnCheckOut.js";
 import BtnJump from "../../components/Button/BtnJump.js";
+import BtnClose from "../../components/Button/BtnClose.js";
 
 const SaleOrderList = () => {
   const initialSaleOrderState = {
-    customer_id: null,
+    supplier_id: null,
     start_order_date: "",
     end_order_date: "",
     code: "",
   };
-  const [saleOrder, setSaleOrder] = useState(initialSaleOrderState);
-  const [saleOrders, setSaleOrders] = useState([]);
+  const [POrder, setPOrder] = useState(initialSaleOrderState);
+  const [POrders, setPOrders] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [customers, setCustomers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const { Content } = Layout;
@@ -50,9 +42,6 @@ const SaleOrderList = () => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onSelectChange,
-    getCheckboxProps: (record) => ({
-      disabled: record.status !== "Pending",
-    }),
     selections: [
       Table.SELECTION_ALL,
       Table.SELECTION_INVERT,
@@ -89,30 +78,14 @@ const SaleOrderList = () => {
   };
 
   const dispatch = useDispatch();
-  const handleShowModalProcess = (record) => {
-    dispatch(
-      openModalProductProcess([
-        { id: record.id, code: record.code, product: record.product },
-      ])
-    );
-  };
-
-  const handleShowModalNG = (record) => {
-    dispatch(
-      openModalProductNG([
-        { id: record.id, code: record.code, product: record.product },
-      ])
-    );
-  };
-
   const expandedRowRender = (record) => {
     const columns = [
       {
-        title: "Product",
-        dataIndex: "product_name",
-        key: "product_name",
+        title: "Material",
+        dataIndex: "material_name",
+        key: "material_name",
         width: "15%",
-        ...getColumnSearch("product_name"),
+        ...getColumnSearch("material_name"),
       },
       {
         title: "Unit Price",
@@ -134,50 +107,14 @@ const SaleOrderList = () => {
         key: "total_price",
         width: "10%",
       },
-
-      {
-        title: "Delivery Date",
-        dataIndex: "delivery_date",
-        key: "delivery_date",
-        width: "10%",
-      },
-
-      {
-        title: "Description",
-        dataIndex: "description",
-        key: "description",
-        width: "10%",
-      },
-
-      {
-        className: "text-center",
-        title: "Routing",
-        key: "process_id",
-        width: "6%",
-        fixed: "right",
-        render: (value, record) => (
-          <BtnModal event={() => handleShowModalProcess(record)} />
-        ),
-      },
-
-      {
-        className: "text-center",
-        title: "NG",
-        key: "ng_type_id",
-        width: "6%",
-        fixed: "right",
-        render: (value, record) => (
-          <BtnModal event={() => handleShowModalNG(record)} />
-        ),
-      },
     ];
 
     return (
       <Table
         columns={columns}
-        dataSource={record.sale_order_items.map((item) => ({
+        dataSource={record.purchase_order_items.map((item) => ({
           key: item.id,
-          product_name: item.product.name,
+          material_name: item.material.name,
           ...item,
         }))}
         pagination={false}
@@ -194,11 +131,11 @@ const SaleOrderList = () => {
       fixed: "left",
     },
     {
-      title: "Customer",
-      dataIndex: "customer",
-      key: "customer",
+      title: "Supplier",
+      dataIndex: "supplier",
+      key: "supplier",
       width: "25%",
-      ...getColumnSearch("customer"),
+      ...getColumnSearch("supplier"),
     },
 
     {
@@ -239,80 +176,85 @@ const SaleOrderList = () => {
         <div className="d-flex justify-content-center">
           {record.status === "Pending" && (
             <>
-              <BtnEdit
-                to="/erp-system/sale-orders/register"
+              <BtnCheckOut
                 className="ms-2"
-                onClick={() => handleJumpRegister(record)}
+                event={() => handleUpdateStatus(record.id)}
+              />
+              <BtnClose
+                className="ms-2"
+                event={() => handleDelete(record.id)}
               />
             </>
           )}
-          <BtnClose className="ms-2" event={() => handleDelete(record.id)} />
         </div>
       ),
     },
   ];
 
-  const handleJumpRegister = (record) => {
-    dispatch(jumpRegister(record));
+  const handleUpdateStatus = async (id) => {
+    await POrdersService.updateStatus(id, {
+      status: "Approved",
+    });
+    handleQuery();
   };
 
   const handleInputFormChange = (e) => {
     const { name, value } = e.target;
-    setSaleOrder((prev) => ({
+    setPOrder((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleOptionFormChange = (value) => {
-    setSaleOrder((prev) => ({
+    setPOrder((prev) => ({
       ...prev,
-      customer_id: value,
+      supplier_id: value,
     }));
   };
 
   const handleDelete = async (id) => {
-    const response = await saleOrderService.destroy(id);
-    const dataFillter = saleOrders.filter((item) => item.id !== id);
-    setSaleOrders(dataFillter);
+    const response = await POrdersService.destroy(id);
+    const dataFillter = POrders.filter((item) => item.id !== id);
+    setPOrders(dataFillter);
     Message(response.type, response.message);
   };
 
   const handleClear = () => {
-    setSaleOrder(initialSaleOrderState);
+    setPOrder(initialSaleOrderState);
     form.resetFields();
   };
 
   const handleQuery = async () => {
-    const saleOrders = await saleOrderService.index(saleOrder);
+    const POrders = await POrdersService.index(POrder);
 
-    const dataSaleOrder = saleOrders?.map((saleOrder, index) => ({
-      ...saleOrder,
-      key: saleOrder.id,
-      customer: saleOrder.customer.name,
+    const dataSaleOrder = POrders?.map((POrder, index) => ({
+      ...POrder,
+      key: POrder.id,
+      supplier: POrder.supplier.name,
     }));
-    setSaleOrders(dataSaleOrder);
+    setPOrders(dataSaleOrder);
   };
 
   const handleJump = () => {
-    const fillterDate = saleOrders.filter((_, index) =>
-      selectedRowKeys.includes(_.key)
+    const fillterDate = POrders.filter((_, index) =>
+      selectedRowKeys.includes(index + 1)
     );
     dispatch(jumpPDORegister(fillterDate));
   };
 
-  const getCustomer = async () => {
-    const data = await customerService.index();
-    setCustomers(data);
+  const getSuppliers = async () => {
+    const data = await suppliersService.index();
+    setSuppliers(data);
   };
 
   useEffect(() => {
-    getCustomer();
+    getSuppliers();
   }, []);
 
   useEffect(() => {
-    form.setFieldsValue(saleOrder);
-  }, [saleOrder, form]);
+    form.setFieldsValue(POrder);
+  }, [POrder, form]);
   return (
     <div>
       <Content
@@ -358,18 +300,18 @@ const SaleOrderList = () => {
               name="code"
               onChange={handleInputFormChange}
               type="text"
-              value={saleOrder.code}
+              value={POrder.code}
             />
           </Form.Item>
-          <Form.Item name="customer" label="Customer" className="py-2">
+          <Form.Item name="supplier_id" label="Supplier" className="py-2">
             <Select
               style={{ width: 180 }}
-              name="customer_id"
-              placeholder="Select a customer"
+              name="supplier_id"
+              placeholder="Select a supplier"
               onChange={handleOptionFormChange}
               allowClear
             >
-              {customers.map((item) => (
+              {suppliers.map((item) => (
                 <Option key={item.id} value={item.id}>
                   {item.name}
                 </Option>
@@ -386,7 +328,7 @@ const SaleOrderList = () => {
               name="start_order_date"
               onChange={handleInputFormChange}
               type="date"
-              value={saleOrder.start_order_date}
+              value={POrder.start_order_date}
             />
           </Form.Item>
 
@@ -395,7 +337,7 @@ const SaleOrderList = () => {
               name="end_order_date"
               onChange={handleInputFormChange}
               type="date"
-              value={saleOrder.end_order_date}
+              value={POrder.end_order_date}
             />
           </Form.Item>
         </Form>
@@ -421,20 +363,17 @@ const SaleOrderList = () => {
           pagination={{
             current: currentPage,
             pageSize: 8,
-            total: saleOrders.length,
+            total: POrders.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={saleOrders.length > 0 ? saleOrders : []}
+          dataSource={POrders.length > 0 ? POrders : []}
         />
       </Content>
 
       {contextHolder}
-
-      <ProcessModal />
-      <NGModal />
     </div>
   );
 };

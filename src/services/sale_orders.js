@@ -21,8 +21,3 @@ export const update = async (id, data) => {
   const response = await Update(endpoint + id, data);
   return response;
 };
-
-export const updateStatus = async (id, data) => {
-  const response = await Update(endpoint + id + "/status", data);
-  return response;
-};

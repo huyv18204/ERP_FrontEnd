@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Layout, theme, Table } from "antd";
 import { useColumnSearch } from "../../hooks/useColumnSearch";
 import { Form, Input, Select } from "antd";
-import * as WHEntryService from "../../services/warehouse_entries";
-import * as WHEntryDetailService from "../../services/warehouse_entry_details";
-import * as suppliersService from "../../services/suppliers";
+import * as PRService from "../../services/purchase_requisitions";
+import * as PRItemsService from "../../services/purchase_requisition_items";
+import * as materialsService from "../../services/materials";
 import { useMessage } from "../../hooks/useMessage";
 import BtnNew from "../../components/Button/BtnNew";
 import BtnSave from "../../components/Button/BtnSave";
@@ -17,17 +17,17 @@ import {
   jumpWHImport,
 } from "../../redux/actions/warehouseAction";
 
-const WarehouseEntryRegister = () => {
-  const initialWHEntryState = {
-    supplier_id: "",
+const PurchaseRequisitionRegister = () => {
+  const initialState = {
+    notes: "",
   };
 
-  const [WHEntry, setWHEntry] = useState(initialWHEntryState);
+  const [PR, setPR] = useState(initialState);
+  const [materials, setMaterials] = useState();
   const [currentPage, setCurrentPage] = useState(1);
   const [isSaved, setIsSaved] = useState(false);
   const [original, setOriginal] = useState([]);
-  const [WHEntryDetail, setWHEntryDetail] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
+  const [PRItem, setPRItem] = useState([]);
   const { Message, contextHolder } = useMessage();
   const { getColumnSearch } = useColumnSearch();
   const dispatch = useDispatch();
@@ -40,21 +40,28 @@ const WarehouseEntryRegister = () => {
     (state) => state.warehouse.warehouseEntryDetials
   );
   const handleInputTableChange = (e, key, column) => {
-    const newValues = [...WHEntryDetail];
+    const newValues = [...PRItem];
     const index = newValues.findIndex((item) => key === item.key);
     newValues[index][column] = e.target.value;
-    setWHEntryDetail(newValues);
+    setPRItem(newValues);
   };
-
-  const getWHEntryDetails = async (WHEntryId) => {
+  const handleOptionTableChange = (value, key, column) => {
+    const newValue = [...PRItem];
+    const index = newValue.findIndex((item) => key === item.key);
+    if (index !== -1) {
+      newValue[index][column] = value;
+      setPRItem(newValue);
+    }
+  };
+  const getPRItem = async (WHEntryId) => {
     if (WHEntryId) {
       try {
-        const response = await WHEntryDetailService.show(WHEntryId);
+        const response = await PRItemsService.show(WHEntryId);
         if (response.data.data.length > 0) {
-          setWHEntryDetail(response.data.data);
+          setPRItem(response.data.data);
           setOriginal(JSON.parse(JSON.stringify(response.data.data)));
         } else {
-          setWHEntryDetail([]);
+          setPRItem([]);
         }
       } catch (error) {
         Message("error", "Error fetching product items: " + error.message);
@@ -64,53 +71,30 @@ const WarehouseEntryRegister = () => {
 
   const columns = [
     {
-      title: "Material code",
-      dataIndex: "material_code",
-      key: "material_code",
+      title: "Material",
+      dataIndex: "material_id",
+      key: "material_id",
       width: "20%",
-      ...getColumnSearch("material_code"),
+      ...getColumnSearch("material_id"),
       render: (value, record) => (
-        <Input
-          name={`material_code[${record.key}]`}
-          value={value}
-          onChange={(e) =>
-            handleInputTableChange(e, record.key, "material_code")
+        <Select
+          name={`material_id[${record.key}]`}
+          placeholder="Select a product"
+          onChange={(newValue) =>
+            handleOptionTableChange(newValue, record.key, "material_id")
           }
-        />
+          allowClear
+          value={record.material_id}
+          style={{ width: "100%" }}
+        >
+          {materials.map((item) => (
+            <Option key={item.id} value={item.id}>
+              {item.name}
+            </Option>
+          ))}
+        </Select>
       ),
     },
-
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      width: "20%",
-      ...getColumnSearch("name"),
-      render: (value, record) => (
-        <Input
-          name={`name[${record.key}]`}
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "name")}
-        />
-      ),
-    },
-
-    {
-      title: "Unit Price",
-      dataIndex: "unit_price",
-      key: "unit_price",
-      width: "20%",
-      ...getColumnSearch("unit_price"),
-      render: (value, record) => (
-        <Input
-          name={`unit_price[${record.key}]`}
-          type="number"
-          value={value}
-          onChange={(e) => handleInputTableChange(e, record.key, "unit_price")}
-        />
-      ),
-    },
-
     {
       title: "Quantity",
       dataIndex: "quantity",
@@ -143,47 +127,41 @@ const WarehouseEntryRegister = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const handleOptionFormChange = (value) => {
-    setWHEntry((prev) => ({
-      ...prev,
-      supplier_id: value,
-    }));
+  const getMaterials = async () => {
+    const data = await materialsService.index();
+    setMaterials(data);
   };
 
   const handleSave = useCallback(async () => {
-    const dataSave = WHEntryDetail.filter((item) => item.id === undefined);
-    const dataUpdate = WHEntryDetail.filter((item) => item.id !== undefined);
+    const dataSave = PRItem.filter((item) => item.id === undefined);
+    const dataUpdate = PRItem.filter((item) => item.id !== undefined);
     if (dataSave.length > 0) {
       try {
-        if (
-          WHEntry &&
-          WHEntry.supplier_id &&
-          dataSave &&
-          dataSave[0].material_code &&
-          dataSave[0].quantity &&
-          dataSave[0].name &&
-          dataSave[0].unit_price
-        ) {
-          if (!isSaved) {
-            const response = await WHEntryService.store({
-              ...WHEntry,
-              warehouseEntryDetail: [...dataSave],
+        if (!isSaved) {
+          if (dataSave && dataSave[0].material_id && dataSave[0].quantity) {
+            const response = await PRService.store({
+              ...PR,
+              PRs: [...dataSave],
             });
-            getWHEntryDetails(response.data.wh_entry.id);
-            setWHEntry(response.data.wh_entry);
             setIsSaved(true);
+            getPRItem(response.data.PR.id);
+            setPR(response.data.PR);
             Message(response.type, response.message);
           } else {
-            const response = await WHEntryDetailService.store({
-              ...WHEntry,
-              warehouseEntryDetail: [...dataSave],
-            });
-            getWHEntryDetails(response.data.wh_entry.id);
-            setWHEntry(response.data.wh_entry);
-            Message(response.type, response.message);
+            Message("error", "Please fill in required fields");
           }
         } else {
-          Message("error", "Please fill in required fields");
+          if (dataSave && dataSave[0].material_id && dataSave[0].quantity) {
+            const response = await PRItemsService.store({
+              ...PR,
+              PRs: [...dataSave],
+            });
+            getPRItem(PR.id);
+            setPR(response.data.PR);
+            Message(response.type, response.message);
+          } else {
+            Message("error", "Please fill in required fields");
+          }
         }
       } catch (error) {
         Message(
@@ -201,10 +179,8 @@ const WarehouseEntryRegister = () => {
         );
         return (
           originalItem &&
-          (originalItem.material_code !== item.material_code ||
-            originalItem.quantity !== item.quantity ||
-            originalItem.unit_price !== item.unit_price ||
-            originalItem.name !== item.name)
+          (originalItem.material_id !== item.material_id ||
+            originalItem.quantity !== item.quantity)
         );
       });
 
@@ -212,40 +188,38 @@ const WarehouseEntryRegister = () => {
         try {
           await Promise.all(
             modifiedRecords.map((item) =>
-              WHEntryDetailService.update(item.id, {
-                material_code: item.material_code,
+              PRItemsService.update(item.id, {
+                material_id: item.material_id,
                 quantity: item.quantity,
-                unit_price: item.unit_price,
-                name: item.name,
               })
             )
           );
-          getWHEntryDetails(WHEntry.id);
+          getPRItem(PR.id);
           Message("success", "Items updated successfully");
         } catch (error) {
           Message("error", "Error updating items: " + error.message);
         }
       }
     }
-  }, [WHEntry, WHEntryDetail]);
+  }, [PR, PRItem]);
 
   const handleDelete = async (id, key) => {
     if (id) {
-      const response = await WHEntryDetailService.destroy(id);
-      const updatedValue = WHEntryDetail.filter((item) => item.key !== key);
-      setWHEntryDetail(updatedValue);
+      const response = await PRItemsService.destroy(id);
+      const updatedValue = PRItem.filter((item) => item.key !== key);
+      setPRItem(updatedValue);
       Message(response.type, response.message);
     } else {
-      const updatedValue = WHEntryDetail.filter((item) => item.key !== key);
-      setWHEntryDetail(updatedValue);
+      const updatedValue = PRItem.filter((item) => item.key !== key);
+      setPRItem(updatedValue);
       Message("success", "Delete row successfully");
     }
   };
 
   const handleNew = () => {
     setIsSaved(false);
-    setWHEntryDetail([]);
-    setWHEntry(initialWHEntryState);
+    setPRItem([]);
+    setPR(initialState);
     dispatch(clearWHCreate());
     form.resetFields();
   };
@@ -254,49 +228,51 @@ const WarehouseEntryRegister = () => {
     if (isSaved) {
       dispatch(
         jumpWHImport({
-          WHEntryDetail: WHEntryDetail,
-          supplier_id: WHEntry.supplier_id,
+          PRItem: PRItem,
+          supplier_id: PR.supplier_id,
         })
       );
       dispatch(clearWHCreate());
     }
   };
 
-  const getSuppliers = async () => {
-    const data = await suppliersService.index();
-    setSuppliers(data);
+  const handleInputFormChange = (e) => {
+    const { name, value } = e.target;
+    setPR((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
-
   const handleAddRow = async () => {
-    const newKey = WHEntryDetail.length + 1;
+    const newKey = PRItem.length + 1;
     const newRow = {
       key: newKey,
-      product_id: "",
-      description: "",
-      delivery_date: "",
+      material_id: "",
+      quantity: "",
     };
 
-    setWHEntryDetail([...WHEntryDetail, newRow]);
+    setPRItem([...PRItem, newRow]);
   };
-  useEffect(() => {
-    getSuppliers();
-  }, []);
 
   useEffect(() => {
     if (warehouseEntry.length > 0) {
-      setWHEntry({ ...warehouseEntry });
+      setPR({ ...warehouseEntry });
       form.setFieldsValue({ ...warehouseEntry });
       setIsSaved(true);
       if (warehouseEntryDetials) {
-        setWHEntryDetail([...warehouseEntryDetials]);
+        setPRItem([...warehouseEntryDetials]);
         setOriginal(JSON.parse(JSON.stringify([...warehouseEntryDetials])));
       }
     }
   }, [warehouseEntry, warehouseEntryDetials, form]);
 
   useEffect(() => {
-    form.setFieldsValue(WHEntry);
-  }, [WHEntry, form]);
+    form.setFieldsValue(PR);
+  }, [PR, form]);
+
+  useEffect(() => {
+    getMaterials();
+  }, []);
   return (
     <div>
       <Content
@@ -338,30 +314,13 @@ const WarehouseEntryRegister = () => {
             maxWidth: "none",
           }}
         >
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: "Please input supplier",
-              },
-            ]}
-            name="supplier_id"
-            label="Supplier"
-            className="py-2"
-          >
-            <Select
-              style={{ width: 180 }}
-              name="supplier_id"
-              placeholder="Select a Supplier"
-              onChange={handleOptionFormChange}
-              allowClear
-            >
-              {suppliers.map((item) => (
-                <Option key={item.id} value={item.id}>
-                  {item.name}
-                </Option>
-              ))}
-            </Select>
+          <Form.Item name="notes" label="Note" className="py-2">
+            <Input
+              name="notes"
+              onChange={handleInputFormChange}
+              type="text"
+              value={PR.notes}
+            />
           </Form.Item>
         </Form>
       </Content>
@@ -382,13 +341,13 @@ const WarehouseEntryRegister = () => {
           pagination={{
             current: currentPage,
             pageSize: 7,
-            total: WHEntryDetail.length,
+            total: PRItem.length,
             onChange: (page) => {
               setCurrentPage(page);
             },
           }}
           columns={columns}
-          dataSource={WHEntryDetail}
+          dataSource={PRItem}
         />
       </Content>
 
@@ -397,4 +356,4 @@ const WarehouseEntryRegister = () => {
   );
 };
 
-export default WarehouseEntryRegister;
+export default PurchaseRequisitionRegister;
