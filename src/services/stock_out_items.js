@@ -1,6 +1,6 @@
 import { Create, Query, Delete, Update } from "./toolbar";
-
-const endpoint = "users/";
+import instance from "../configs/axios";
+const endpoint = "stock-out-items/";
 
 export const index = async (params) => {
   const data = await Query(endpoint, params);
@@ -19,5 +19,9 @@ export const destroy = async (id) => {
 
 export const update = async (id, data) => {
   const response = await Update(endpoint + id, data);
+  return response;
+};
+export const show = async (WHEntryId) => {
+  const response = await instance.get(endpoint + WHEntryId);
   return response;
 };

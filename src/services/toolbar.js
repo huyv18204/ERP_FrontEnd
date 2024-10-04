@@ -1,8 +1,16 @@
 import instance from "../configs/axios";
+const user = localStorage.getItem("user");
+const token = user ? JSON.parse(user).access_token : null;
 export const Create = async (endpoint, data) => {
   try {
-    const res = await instance.post(endpoint, data);
-    return res.data;
+    if (token) {
+      const res = await instance.post(endpoint, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    }
   } catch (error) {
     console.error(
       "Error create data:",
@@ -14,8 +22,14 @@ export const Create = async (endpoint, data) => {
 
 export const Update = async (endpoint, data) => {
   try {
-    const res = await instance.put(endpoint, data);
-    return res.data;
+    if (token) {
+      const res = await instance.put(endpoint, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    }
   } catch (error) {
     console.error(
       "Error update data:",
@@ -39,8 +53,14 @@ export const Query = async (endpoint, data) => {
   }
 
   try {
-    const res = await instance.get(endpoint);
-    return res.data;
+    if (token) {
+      const res = await instance.get(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Gửi token trong header
+        },
+      });
+      return res.data;
+    }
   } catch (error) {
     console.error(
       "Error fetching employees:",
@@ -52,25 +72,17 @@ export const Query = async (endpoint, data) => {
 
 export const Delete = async (endpoint) => {
   try {
-    const res = await instance.delete(endpoint);
-    if (res.status === 200) {
-      return res.data;
+    if (token) {
+      const res = await instance.delete(endpoint);
+      if (res.status === 200) {
+        return res.data;
+      }
     }
   } catch (error) {
     console.error(
       "Error deleting data:",
       error.response ? error.response.data : error.message
     );
-    throw error; // Ném lỗi để hàm gọi bên ngoài có thể xử lý
+    throw error;
   }
 };
-
-// export const ServerStatus = async () => {
-//   try {
-//     const response = await axios.get("http://localhost:8000/ping");
-//     return response.status === 200;
-//   } catch (error) {
-//     console.error("Server is not available:", error.message);
-//     return false;
-//   }
-// };

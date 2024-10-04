@@ -26,7 +26,7 @@ const Menus = () => {
     setMenuItems(transformIcon(menus));
   };
   const transformIcon = (menuData) => {
-    return menuData.map((item) => {
+    return menuData?.map((item) => {
       return {
         ...item,
         label: item.url ? (

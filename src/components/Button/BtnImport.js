@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "antd";
 import { ImportOutlined } from "@ant-design/icons";
-const BtnSave = ({ event, className }) => {
+const BtnImport = ({ event, className }) => {
   return (
     <Button className={className} onClick={event}>
       Import
@@ -10,4 +10,4 @@ const BtnSave = ({ event, className }) => {
   );
 };
 
-export default BtnSave;
+export default BtnImport;

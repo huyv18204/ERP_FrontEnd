@@ -16,7 +16,11 @@ const Employee = () => {
     address: "",
     work_date: "",
     department_id: "",
+    email: "",
+    password: "",
+    role: "",
   };
+
   const [employee, setEmployee] = useState(initialEmployeeState);
   const [currentPage, setCurrentPage] = useState(1);
   const [employees, setEmployees] = useState([]);
@@ -27,7 +31,7 @@ const Employee = () => {
   const { Content } = Layout;
   const { Option } = Select;
   const [form] = Form.useForm();
-
+  console.log(employees);
   const handleInputTableChange = (e, key, column) => {
     const newEmployees = [...employees];
     const index = newEmployees.findIndex((item) => key === item.key);
@@ -68,10 +72,10 @@ const Employee = () => {
   const columns = [
     {
       title: "No.",
-      dataIndex: "employee_code",
-      key: "employee_code",
+      dataIndex: "code",
+      key: "code",
       width: "9%",
-      ...getColumnSearch("employee_code"),
+      ...getColumnSearch("code"),
       fixed: "left",
     },
     {
@@ -90,6 +94,24 @@ const Employee = () => {
         />
       ),
     },
+
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: "16%",
+      ...getColumnSearch("email"),
+      render: (value, record) => (
+        <Input
+          className="input-no-border"
+          name={`email[${record.key}]`}
+          type="text"
+          value={value}
+          onChange={(e) => handleInputTableChange(e, record.key, "email")}
+        />
+      ),
+    },
+
     {
       title: "Phone",
       dataIndex: "phone",
@@ -128,6 +150,38 @@ const Employee = () => {
               {item.name}
             </Option>
           ))}
+        </Select>
+      ),
+    },
+
+    {
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
+      width: "12%",
+      ...getColumnSearch("role"),
+      render: (value, record) => (
+        <Select
+          name={`role[${record.key}]`}
+          placeholder="Select a role"
+          onChange={(newValue) =>
+            handleOptionTableChange(newValue, record.key, "role")
+          }
+          allowClear
+          value={value}
+          style={{ minWidth: 130 }}
+        >
+          <Option key="Admin" value="Admin">
+            Admin
+          </Option>
+
+          <Option key="Manager" value="Manager">
+            Manager
+          </Option>
+
+          <Option key="Employee" value="Employee">
+            Employee
+          </Option>
         </Select>
       ),
     },
@@ -188,10 +242,10 @@ const Employee = () => {
     }));
   };
 
-  const handleOptionFormChange = (value) => {
+  const handleOptionFormChange = (name, value) => {
     setEmployee((prev) => ({
       ...prev,
-      department_id: value,
+      [name]: value,
     }));
   };
 
@@ -203,6 +257,8 @@ const Employee = () => {
         key: index,
         department: employee.department.name,
       }));
+      console.log(data);
+
       setEmployees(data);
     } catch (error) {
       Message(
@@ -230,7 +286,7 @@ const Employee = () => {
           const data = await employeeService.store(employee);
           const newEmployee = {
             ...data,
-            key: data.employee_code,
+            key: data.code,
             department: data.department ? data.department.name : "",
           };
           setEmployees([newEmployee]);
@@ -337,6 +393,47 @@ const Employee = () => {
               placeholder="Enter Name"
             />
           </Form.Item>
+
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: "Please input email",
+              },
+            ]}
+            name="email"
+            label="Email"
+            className="py-2"
+          >
+            <Input
+              name="email"
+              onChange={handleInputFormChange}
+              type="text"
+              value={employee.email}
+              placeholder="Enter Email"
+            />
+          </Form.Item>
+
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: "Please input password",
+              },
+            ]}
+            name="password"
+            label="Password"
+            className="py-2"
+          >
+            <Input
+              name="password"
+              onChange={handleInputFormChange}
+              type="password"
+              value={employee.password}
+              placeholder="Enter Email"
+            />
+          </Form.Item>
+
           <Form.Item name="phone" label="Phone" className="py-2">
             <Input
               name="phone"
@@ -352,7 +449,6 @@ const Employee = () => {
               onChange={handleInputFormChange}
               type="text"
               value={employee.address}
-              style={{ width: 350 }}
               placeholder="Enter Address"
             />
           </Form.Item>
@@ -372,7 +468,9 @@ const Employee = () => {
               style={{ width: 180 }}
               name="department_id"
               placeholder="Select a department"
-              onChange={handleOptionFormChange}
+              onChange={(value) =>
+                handleOptionFormChange("department_id", value)
+              }
               allowClear
             >
               {departments.map((item) => (
@@ -380,6 +478,39 @@ const Employee = () => {
                   {item.name}
                 </Option>
               ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: "Please input role",
+              },
+            ]}
+            name="role"
+            label="Role"
+            className="py-2"
+          >
+            <Select
+              style={{ width: 180 }}
+              name="role"
+              placeholder="Select a role"
+              // onChange={handleOptionFormChange("role")}
+              onChange={(value) => handleOptionFormChange("role", value)}
+              allowClear
+            >
+              <Option key="Admin" value="Admin">
+                Admin
+              </Option>
+
+              <Option key="Manager" value="Manager">
+                Manager
+              </Option>
+
+              <Option key="Employee" value="Employee">
+                Employee
+              </Option>
             </Select>
           </Form.Item>
 

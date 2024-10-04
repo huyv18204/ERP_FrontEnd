@@ -27,7 +27,7 @@ const RenderTitle = () => {
       return <span className="ms-3">Supplier Management</span>;
     case "/erp-system/products":
       return <span className="ms-3">Product Management</span>;
-    case "/erp-system/bom/register":
+    case "/erp-system/boms/register":
       return <span className="ms-3">BOM Register</span>;
     case "/erp-system/warehouse-entries/create":
       return <span className="ms-3">Create Warehouse Entry</span>;
@@ -51,6 +51,12 @@ const RenderTitle = () => {
       return <span className="ms-3">Purchase Order Register</span>;
     case "/erp-system/purchase-orders":
       return <span className="ms-3">Purchase Order</span>;
+    case "/erp-system/stock-outs/create":
+      return <span className="ms-3">Stock Out Register</span>;
+    case "/erp-system/stock-outs":
+      return <span className="ms-3">Stock Out</span>;
+    case "/erp-system/warehouses/export":
+      return <span className="ms-3">Warehouse Export</span>;
     default:
       return <>Dashboard</>;
   }
